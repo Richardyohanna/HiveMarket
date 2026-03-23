@@ -5,26 +5,91 @@
 
 import { Platform } from 'react-native';
 
-const tintColorLight = '#0a7ea4';
-const tintColorDark = '#fff';
+type ThemeType = {
+  background: string;
+  text: string;
+  subText: string;
+  primary: string;
+  sectionBackground: string;
+  screenBackground: string;
+  iconBackground: string;
+  borderColor: string;
+  readColor: string
+}
 
-export const Colors = {
+type ThemeFontSize = {
+  xsm: number;
+  sm: number;
+  md: number;
+  lg: number;
+  xlg: number;
+  xxlg: number;
+  xxxlg: number;
+  
+}
+
+export const FontSize = {
+  size: {
+    xsm: 10,
+    sm: 12,
+    md: 16,
+    lg: 18,
+    xlg_md: 23,
+    xlg: 30,    
+    xxlg: 45,
+    xxxlg: 55,
+  }
+}
+export const Colors: {
+  light: ThemeType;
+  dark: ThemeType;
+  splashLight: ThemeType;
+  splashDark: ThemeType
+} = {
   light: {
-    text: '#11181C',
-    background: '#fff',
-    tint: tintColorLight,
-    icon: '#687076',
-    tabIconDefault: '#687076',
-    tabIconSelected: tintColorLight,
+    background: "#ffffff",
+    text: "#000000",
+    subText: "#008100",
+    primary: "#fff",
+    sectionBackground: "#f2f2f26e",
+    screenBackground: "white",
+    iconBackground: "#2ecc702f",
+    borderColor: "#9a9a9a",
+    readColor: "#00000078"
   },
   dark: {
-    text: '#ECEDEE',
-    background: '#151718',
-    tint: tintColorDark,
-    icon: '#9BA1A6',
-    tabIconDefault: '#9BA1A6',
-    tabIconSelected: tintColorDark,
+    background: "#000",
+    text: "#ffffffc5",
+    subText: "#008100",
+    primary: "#171616",
+    sectionBackground: "#1E293B" ,
+    screenBackground: "#0B120E",
+    iconBackground: "#2ecc702f",
+    borderColor: "#9a9a9a",
+    readColor: "#ffffff78"
   },
+  splashDark: {
+    background: "#000",
+    text: "#ffffffc5",
+    subText: "#008100",
+    primary: "#171616",
+    sectionBackground: "#f2f2f26e",
+    screenBackground: "#0B120E",
+    iconBackground: "#2ecc702f",
+    borderColor: "#9a9a9a",
+    readColor: "#00000078"
+  } ,
+  splashLight: {
+    background: "#ffffff",
+    text: "#000000",
+    subText: "#008100",
+    primary: "#fff",
+    sectionBackground: "#1E293B" ,
+    screenBackground:"white",
+    iconBackground: "#2ecc702f",
+    borderColor: "#9a9a9a",
+    readColor: "#ffffff78"
+  }
 };
 
 export const Fonts = Platform.select({
