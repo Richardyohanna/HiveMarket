@@ -1,40 +1,42 @@
 # Learn more https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files
 
+.metadata/
+
 # dependencies
-node_modules/
+Frontend/node_modules/
 
 # Expo
-.expo/
-dist/
-web-build/
-expo-env.d.ts
+Frontend/.expo/
+Frontend/dist/
+Frontend/web-build/
+Frontend/expo-env.d.ts
 
 # Native
-.kotlin/
-*.orig.*
-*.jks
-*.p8
-*.p12
-*.key
-*.mobileprovision
+Frontend/.kotlin/
+Frontend/*.orig.*
+Frontend/*.jks
+Frontend/*.p8
+Frontend/*.p12
+Frontend/*.key
+Frontend/*.mobileprovision
 
 # Metro
-.metro-health-check*
+Frontend/.metro-health-check*
 
 # debug
-npm-debug.*
-yarn-debug.*
-yarn-error.*
+Frontend/npm-debug.*
+Frontend/yarn-debug.*
+Frontend/yarn-error.*
 
 # macOS
-.DS_Store
-*.pem
+Frontend/.DS_Store
+FroFrontend/ntend/*.pem
 
 # local env files
-.env*.local
+Frontend/.env*.local
 
 # typescript
-*.tsbuildinfo
+Frontend/*.tsbuildinfo
 
 app-example
 

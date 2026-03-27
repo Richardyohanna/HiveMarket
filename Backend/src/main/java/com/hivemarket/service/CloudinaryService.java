@@ -19,10 +19,6 @@ public class CloudinaryService {
 	
 	private final Cloudinary cloudinary;
 	
-	CloudinaryService(Cloudinary cloudinary){
-		this.cloudinary =cloudinary;
-	}
-
 	public String uploadImage(MultipartFile file) {
 		
 		try {
