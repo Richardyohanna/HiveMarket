@@ -1,3 +1,5 @@
+import { getToken } from "../services/authStorage";
+
 const BASE_URL = "http://172.20.10.8:8080/api/products";
 
 export interface BackendProductRequest {
@@ -59,6 +61,7 @@ export async function createProductOnlyApi(
     location: data.location,
     s_id: 3,
   };
+  const token = await getToken();
 
   console.log("Creating product with:", requestBody);
   console.log("POST URL:", BASE_URL);
@@ -73,6 +76,7 @@ export async function createProductOnlyApi(
         headers: {
           "Content-Type": "application/json",
           Accept: "application/json",
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify(requestBody),
       },
@@ -106,11 +110,15 @@ export async function uploadProductImagesApi(
   imageUris: string[]
 ): Promise<ProductResponse> {
   const formData = new FormData();
+  const token = await getToken();
+
 
   imageUris.forEach((uri, index) => {
     const fileName = uri.split("/").pop() || `image_${index}.jpg`;
     const ext = fileName.split(".").pop()?.toLowerCase() || "jpg";
-
+  
+    
+  
     formData.append("images", {
       uri,
       name: fileName,
@@ -136,6 +144,7 @@ export async function uploadProductImagesApi(
         body: formData,
         headers: {
           Accept: "application/json",
+          Authorization: `Bearer ${token}`,
         },
       },
       30000
@@ -178,7 +187,8 @@ export async function getAllProductsApi(): Promise<ProductResponse[]> {
   }
 
   const responseText = await response.text();
-  console.log("Fetched products:", responseText);
+ 
+
 
   if (!response.ok) {
     throw new Error(responseText || "Failed to fetch products");

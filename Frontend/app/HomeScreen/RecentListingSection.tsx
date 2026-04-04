@@ -3,14 +3,15 @@ import { useProductStore } from "@/src/store/productStore";
 import { router } from "expo-router";
 import React, { useEffect } from "react";
 import {
-    Image,
-    Pressable,
-    ScrollView,
-    StyleSheet,
-    Text,
-    useColorScheme,
-    View,
+  Image,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  useColorScheme,
+  View,
 } from "react-native";
+
 
 const RecentListingSection = () => {
 
@@ -23,6 +24,8 @@ const RecentListingSection = () => {
   const loading = useProductStore((state) => state.loading);
   const error = useProductStore((state) => state.error);
 
+  
+  
   useEffect(() => {
     loadRecentListings();
   }, [loadRecentListings]);
@@ -191,7 +194,7 @@ const onProductClicked = (id: string) => {
                       fontWeight: "bold",
                     }}
                   >
-                    ₦{item.pAmount}
+                    ₦{Number(item.pAmount).toLocaleString()}
                   </Text>
                   <Text style={{ color: "#757575", fontWeight: "200" }}>
                     {item.pTimePosted}

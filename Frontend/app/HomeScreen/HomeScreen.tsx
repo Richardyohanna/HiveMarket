@@ -1,7 +1,9 @@
 import { Colors } from '@/constants/theme'
+import ScrollWithRefresh from '@/hooks/ScrollWithRefresh'
+import { useProductStore } from '@/src/store/productStore'
 import { router } from 'expo-router'
 import React from 'react'
-import { Image, Pressable, ScrollView, StatusBar, StyleSheet, TextInput, useColorScheme, View } from 'react-native'
+import { Image, Pressable, StatusBar, StyleSheet, TextInput, useColorScheme, View } from 'react-native'
 import FeaturedProductSection from './FeaturedProductSection'
 import HeaderSection from './HeaderSection'
 import RecentListingSection from './RecentListingSection'
@@ -14,8 +16,11 @@ const HeaderData = {
 const HomeScreen = () => {
 
  const scheme = useColorScheme();
+ const loadingRecentListings = useProductStore((state) => state.loading);
 
  const theme = scheme === "dark" ? Colors.dark : Colors.light
+
+ 
 
  const onNotificationClicked = () => {
     router.push("/NotificationScreen/NotificationScreen")
@@ -31,7 +36,11 @@ const HomeScreen = () => {
 
       <HeaderSection profilePicture={HeaderData.profilePicture} firstName={HeaderData.firstName} onNotificationClicked={onNotificationClicked}/>
        
-      <ScrollView horizontal={false} showsHorizontalScrollIndicator={false} showsVerticalScrollIndicator={false} contentContainerStyle={{gap: 20}}>
+      <ScrollWithRefresh horizontal={false} showsHorizontalScrollIndicator={false} showsVerticalScrollIndicator={false} contentContainerStyle={{gap: 20}}
+        onRefresh={() => {
+          loadingRecentListings ? console.log("Already loading recent listings") : useProductStore.getState().loadRecentListings();
+        }}
+      >
          
         {/** Search Section */}
         <View style={[style.search, {backgroundColor: scheme === "dark" ? "#1E293B" : "#f2f2f26e"}]}>
@@ -52,7 +61,7 @@ const HomeScreen = () => {
         {/* <CategorySection /> */}
         <FeaturedProductSection />
         <RecentListingSection />
-      </ScrollView>
+      </ScrollWithRefresh>
     </View>
   )
 }

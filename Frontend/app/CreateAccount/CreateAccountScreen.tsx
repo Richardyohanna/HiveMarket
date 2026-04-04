@@ -1,125 +1,226 @@
 import { Colors, FontSize } from '@/constants/theme';
+import { registerUser } from '@/src/services/authApi';
+import { saveToken } from '@/src/services/authStorage';
 import { router } from 'expo-router';
-import React from 'react';
-import { Image, Pressable, StyleSheet, Text, TextInput, useColorScheme, View } from 'react-native';
+import React, { useState } from 'react';
+import {
+  Alert,
+  Image,
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableWithoutFeedback,
+  useColorScheme,
+  View
+} from 'react-native';
 
 const CreateAccountScreen = () => {
-
   const scheme = useColorScheme();
   const themeSize = FontSize.size;
-  const theme = scheme === "dark" ? Colors.dark : Colors.light
+  const theme = scheme === "dark" ? Colors.dark : Colors.light;
+
+  const [fullName, setFullName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const onLogin = () => {
-    router.replace("/Login/LoginScreen")
-  }
+    router.replace("/Login/LoginScreen");
+  };
+
+  const handleRegister = async () => {
+    if (!fullName.trim() || !email.trim() || !password.trim() || !confirmPassword.trim()) {
+      Alert.alert("Validation Error", "Please fill all fields");
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      Alert.alert("Validation Error", "Passwords do not match");
+      return;
+    }
+
+    try {
+      setLoading(true);
+
+      const response = await registerUser({
+        fullName: fullName.trim(),
+        email: email.trim(),
+        password: password.trim(),
+      });
+
+      await saveToken(response.token);
+
+      Alert.alert("Success", "Account created successfully");
+
+      router.replace("/");
+      // change to your app home route
+    } catch (error: any) {
+      Alert.alert("Registration Failed", error.message || "Something went wrong");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
-    <View style={style.cbg}>
-      <View style={[
-        style.form_heading, 
-        {
-          shadowColor: theme.text, 
-          shadowOpacity: scheme ==="dark" ? 0.5 : 0.2,
-          shadowRadius: scheme ==="dark" ? 10 : 7,  
-          backgroundColor: theme.background 
-          }]}
+    <KeyboardAvoidingView style={style.cbg} behavior={Platform.OS === "ios" ? "padding" : "height"}>
+      <TouchableWithoutFeedback  >
+      <ScrollView
+        showsHorizontalScrollIndicator={false}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={[ style.form_heading,{ flexGrow: 1 }]} keyboardShouldPersistTaps="handled"
+        style={[
+         
+          {
+            //shadowColor: theme.text,
+           // shadowOpacity: scheme === "dark" ? 0.5 : 0.2,
+            //shadowRadius: scheme === "dark" ? 10 : 7,
+            backgroundColor: theme.background
+          }
+        ]}
+      >
+        <Image
+          source={require("../../assets/images/favicon.png")}
+          style={{ width: 100, height: 80 }}
+        />
+
+        <Text
+          style={[
+            style.header,
+            { color: theme.text, fontSize: themeSize.xlg_md, marginTop: -15 }
+          ]}
+        >
+          Create Account
+        </Text>
+
+        <Text style={{ color: theme.text, marginTop: 5 }}>
+          The exclusive marketplace for students
+        </Text>
+
+        <View style={style.form}>
+          <Text style={{ color: theme.text, fontSize: themeSize.md, fontWeight: "700" }}>
+            Full Name
+          </Text>
+          <View style={[style.input, inputStyle(scheme)]}>
+            <Image
+              source={require("../../assets/images/CreateAccount/fullname.png")}
+              style={{ tintColor: "#888686ca" }}
+            />
+            <TextInput
+              placeholder="Full Name"
+              placeholderTextColor={scheme === "dark" ? "#aaa" : "#666"}
+              style={{ flex: 1, color: theme.text }}
+              value={fullName}
+              onChangeText={setFullName}
+            />
+          </View>
+
+          <Text style={{ color: theme.text, fontSize: themeSize.md, fontWeight: "700", marginTop: 10 }}>
+            Email
+          </Text>
+          <View style={[style.input, inputStyle(scheme)]}>
+            <Image
+              source={require("../../assets/images/CreateAccount/email.png")}
+              style={{ tintColor: "#888686ca" }}
+            />
+            <TextInput
+              placeholder="example@gmail.com"
+              placeholderTextColor={scheme === "dark" ? "#aaa" : "#666"}
+              style={{ flex: 1, color: theme.text }}
+              value={email}
+              onChangeText={setEmail}
+              autoCapitalize="none"
+              keyboardType="email-address"
+            />
+          </View>
+
+          <Text style={{ color: theme.text, fontSize: themeSize.md, fontWeight: "700", marginTop: 10 }}>
+            Password
+          </Text>
+          <View style={[style.input, inputStyle(scheme)]}>
+            <Image
+              source={require("../../assets/images/CreateAccount/password.png")}
+              style={{ tintColor: "#888686ca" }}
+            />
+            <TextInput
+              placeholder="Create your password"
+              placeholderTextColor={scheme === "dark" ? "#aaa" : "#666"}
+              style={{ flex: 1, color: theme.text }}
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry
+            />
+          </View>
+
+          <Text style={{ color: theme.text, fontSize: themeSize.md, fontWeight: "700", marginTop: 10 }}>
+            Confirm Password
+          </Text>
+          <View style={[style.input, inputStyle(scheme)]}>
+            <Image
+              source={require("../../assets/images/CreateAccount/password.png")}
+              style={{ tintColor: "#888686ca" }}
+            />
+            <TextInput
+              placeholder="Confirm your password"
+              placeholderTextColor={scheme === "dark" ? "#aaa" : "#666"}
+              style={{ flex: 1, color: theme.text }}
+              value={confirmPassword}
+              onChangeText={setConfirmPassword}
+              secureTextEntry
+            />
+          </View>
+
+          <Pressable
+            onPress={handleRegister}
+            disabled={loading}
+            style={[
+              style.button,
+              {
+                backgroundColor: theme.subText,
+                shadowColor: scheme === "dark" ? "#96fea0" : "#1a321c",
+                shadowOpacity: scheme === "dark" ? 0.5 : 0.7,
+                shadowRadius: scheme === "dark" ? 5 : 3,
+                shadowOffset: { width: 0, height: 2 },
+                opacity: loading ? 0.7 : 1
+              }
+            ]}
           >
-
-        <Image source={require("../../assets/images/favicon.png")} style = {{width: 100, height: 80}}/>
-        <Text style={[style.header, {color: theme.text, fontSize: themeSize.xlg_md, marginTop: -15}]}>Create Accunt</Text>
-        <Text style={{color: theme.text, marginTop: 5}}>The exclusive marketplace for students</Text>
-        
-        <View style={style.form} >
-
-          {/** Full Name */}
-          <Text style={{color: theme.text, fontSize: themeSize.md, fontWeight: "700", letterSpacing: 1}}>Full Name</Text>
-          <View style={
-            [
-              style.input, 
-              {
-                backgroundColor: scheme === "dark" ? "rgba(200,200,200, 0.2)" : "rgba(200,200,200, 0.2)",
-                borderColor: scheme === "dark" ? "rgba(200,200,200, 0.2)" : "rgba(100,100,100, 0.2)"}
-                ]}>
-            <Image source={require("../../assets/images/CreateAccount/fullname.png")} style={{tintColor: "#888686ca"}}/>
-            <TextInput 
-              placeholder='Full Name'
-            />           
-          </View>
-
-          {/** Email */}
-          <Text style={{color: theme.text, fontSize: themeSize.md, fontWeight: "700", letterSpacing: 1, marginTop: 10}}>Email</Text>
-          <View style={
-            [
-              style.input, 
-              {
-                backgroundColor: scheme === "dark" ? "rgba(200,200,200, 0.2)" : "rgba(200,200,200, 0.2)",
-                borderColor: scheme === "dark" ? "rgba(200,200,200, 0.2)" : "rgba(100,100,100, 0.2)"}
-                ]}>
-            <Image source={require("../../assets/images/CreateAccount/email.png")} style={{tintColor: "#888686ca"}}/>
-            <TextInput 
-              placeholder='example@gmail.com'
-            />           
-          </View>
-        
-
-
-          {/** password */}
-          <Text style={{color: theme.text, fontSize: themeSize.md, fontWeight: "700", letterSpacing: 1, marginTop: 10}}>Password</Text>
-          <View style={
-            [
-              style.input, 
-              {
-                backgroundColor: scheme === "dark" ? "rgba(200,200,200, 0.2)" : "rgba(200,200,200, 0.2)",
-                borderColor: scheme === "dark" ? "rgba(200,200,200, 0.2)" : "rgba(100,100,100, 0.2)"}
-                ]}>
-            <Image source={require("../../assets/images/CreateAccount/password.png")} style={{tintColor: "#888686ca"}}/>
-            <TextInput 
-              placeholder='create your password'
-              style={{flex: 1}}
-            />  
-            <Image source={require("../../assets/images/CreateAccount/eye.png")} style={{width: 23, height: 23, tintColor: "#888686ca"}} />    
-          </View>
-
-        {/** confirmPassword */}
-          <Text style={{color: theme.text, fontSize: themeSize.md, fontWeight: "700", letterSpacing: 1, marginTop: 10}}>Confirm Password</Text>
-          <View style={
-            [
-              style.input, 
-              {
-                backgroundColor: scheme === "dark" ? "rgba(200,200,200, 0.2)" : "rgba(200,200,200, 0.2)",
-                borderColor: scheme === "dark" ? "rgba(200,200,200, 0.2)" : "rgba(100,100,100, 0.2)"}
-                ]}>
-            <Image source={require("../../assets/images/CreateAccount/password.png")}  style={{tintColor: "#888686ca"}}/>
-            <TextInput 
-              placeholder='confirm your password'
-              style={{flex: 1}}
-            />  
-            <Image source={require("../../assets/images/CreateAccount/eye-off.png")} style={{width: 23, height: 23, tintColor: "#888686ca" }}/>    
-          </View>
-
-          {/** Create Accoount Button */}
-
-          <Pressable style={[
-            style.button,
-            {
-              backgroundColor: theme.subText,
-              shadowColor: scheme === "dark" ? "#96fea0": "#1a321c", 
-              shadowOpacity: scheme === "dark" ?  0.5: 0.7,
-              shadowRadius: scheme === "dark" ? 5: 3,
-              shadowOffset: {width: 0, height: 2}
-          }]}>
-            <Text style={{color: theme.text, fontSize: themeSize.md, fontWeight: "700"}}>Create Account</Text>
+            <Text style={{ color: theme.text, fontSize: themeSize.md, fontWeight: "700" }}>
+              {loading ? "Creating..." : "Create Account"}
+            </Text>
           </Pressable>
 
-          <Text style={{textAlign: "center", width: "100%", marginTop: 15, fontSize: themeSize.sm, color: theme.text}}> Already have an account? <Text style={{color: theme.subText}} onPress={onLogin}> Login </Text></Text>
-          <Text style={{fontSize: themeSize.xsm, textAlign: "center", color: theme.text, marginTop: 6}}>By creating an account, you agree to Hive<Text >Market's </Text><Text style={{color: theme.subText, }}>Terms of Service</Text> and <Text style={{color: theme.subText, }}>Privacy Policy</Text></Text>
+          <Text
+            style={{
+              textAlign: "center",
+              width: "100%",
+              marginTop: 15,
+              fontSize: themeSize.sm,
+              color: theme.text
+            }}
+          >
+            Already have an account?
+            <Text style={{ color: theme.subText }} onPress={onLogin}>
+              {" "}Login
+            </Text>
+          </Text>
         </View>
-        
-      </View>   
-      
-    </View>
-  )
-}
+      </ScrollView>
+      </TouchableWithoutFeedback>
+    </KeyboardAvoidingView>
+  );
+};
+
+const inputStyle = (scheme: string | null | undefined) => ({
+  backgroundColor: "rgba(200,200,200, 0.2)",
+  borderColor: scheme === "dark"
+    ? "rgba(200,200,200, 0.2)"
+    : "rgba(100,100,100, 0.2)"
+});
 
 export default CreateAccountScreen;
 
@@ -134,11 +235,10 @@ const style = StyleSheet.create({
     borderRadius: 20,
     width: "100%",
     
-    shadowOffset: {width: 0, height:  0},    
-    elevation: 4,
+
     padding: 15,
     alignItems: "center",
-    flex: 1,
+   
     
   },
   header: {

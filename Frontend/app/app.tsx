@@ -1,12 +1,10 @@
-import { router } from 'expo-router';
 import React, { useEffect } from 'react';
 import { StatusBar, View } from 'react-native';
-import SplashScreen from './SplashScreen/SplashScreen';
 
 const App = () => {
   useEffect(() => {
     const timer = setTimeout(() => {
-      router.replace('/(OnboardingScreen)/OnboardScreen');
+     // router.replace('/(OnboardingScreen)/OnboardScreen');
     }, 3000);
 
     return () => clearTimeout(timer);
@@ -15,7 +13,7 @@ const App = () => {
   return (
     <View style={{ flex: 1 }}>
       <StatusBar hidden translucent />
-      <SplashScreen />
+      {/**<SplashScreen /> */}
     </View>
   );
 };

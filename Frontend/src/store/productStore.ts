@@ -80,7 +80,7 @@ export const useProductStore = create<ProductStore>((set, get) => ({
 
   addRecentListing: (product: RecentListingItem) =>
     set((state) => ({
-      recentListings: [product, ...state.recentListings],
+      recentListings: [...state.recentListings, product],
     })),
 
   updateRecentListing: (id: string, updated: Partial<RecentListingItem>) =>
@@ -194,7 +194,7 @@ export const useProductStore = create<ProductStore>((set, get) => ({
         pName: createdProduct.pName,
         pDetail: createdProduct.pDetail,
         pAmount: String(createdProduct.pAmount),
-        pTimePosted: "Just now",
+        pTimePosted: createdProduct.createdAt ? formatTimeAgo(createdProduct.createdAt) : "Just now",
         pQuality: createdProduct.pCondition,
         status: "PENDING",
       };

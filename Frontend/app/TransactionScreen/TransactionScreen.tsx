@@ -1,17 +1,44 @@
 import { Colors, FontSize } from '@/constants/theme';
+import { usePayment } from "@/src/hooks/usePayment";
 import { useProductStore } from "@/src/store/productStore";
+import { listenForPaymentReturn } from "@/src/utils/deepLink";
 import { router, useLocalSearchParams } from 'expo-router';
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Image, Pressable, StyleSheet, Text, useColorScheme, View } from 'react-native';
-
 const TransactionScreen = () => {
 
- const { id } = useLocalSearchParams<{ id: string }>();
+const { startPayment, confirmPayment, loading } = usePayment();
+const { id } = useLocalSearchParams<{ id: string }>();
     
 const scheme = useColorScheme();
 const themeSize = FontSize.size;
 const theme = scheme === "dark" ? Colors.dark : Colors.light;
 const recentListings = useProductStore((state) => state.recentListings);
+
+const [paymentReference, setPaymentReference] = useState<string | null>(null);
+
+useEffect(() => {
+  const unsubscribe = listenForPaymentReturn(async (url) => {
+    console.log("Returned URL:", url);
+
+    if (!paymentReference) return;
+
+    try {
+      const verify = await confirmPayment(paymentReference);
+
+      if (verify.paymentStatus === "success") {
+        alert("Payment Successful 🎉");
+      } else {
+        alert("Payment Failed ❌");
+      }
+
+    } catch (err) {
+      console.log(err);
+    }
+  });
+
+  return unsubscribe;
+}, [paymentReference]);
 
 const product = recentListings.find(
     (item) => String(item.id) === String(id)
@@ -32,6 +59,22 @@ const product = recentListings.find(
       });
     };
     
+const handlePayment = async () => {
+  try {
+    const init = await startPayment({
+      productId: Number(product.id),
+      buyerId: 1, // replace later with real user
+      customerEmail: "test@email.com", // replace later
+      amount: Number(product.pAmount),
+    });
+
+    // Save reference temporarily
+    setPaymentReference(init.reference);
+
+  } catch (err) {
+    alert("Payment failed to start");
+  }
+};
 
   return (
     <View style={{flex: 1, width: "100%", backgroundColor: theme.screenBackground , gap: 7}}>
@@ -239,7 +282,7 @@ const product = recentListings.find(
         </View>
 
         <Pressable
-
+            onPress={handlePayment}
             style={{
             backgroundColor: theme.subText,
             padding: 15,

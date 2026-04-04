@@ -22,6 +22,15 @@ const HeaderSection = ({profilePicture, firstName, onNotificationClicked}: HomeH
     const onProfileImage = () => {
         router.navigate("/ProfileScreen/ProfileScreen");
     }
+
+    const onSignInClicked = () => {
+        router.navigate("/Login/LoginScreen");
+    }   
+
+    const onSignUpClicked = () => {
+        router.navigate("/CreateAccount/CreateAccountScreen");
+    }   
+
   return (
     <View style={{ width: "100%", alignItems: "center", justifyContent: "flex-start", flexDirection: "row"}}>
         <View style={{flexDirection: "row", flex: 1, gap: 15, alignItems: "center"}}>
@@ -36,9 +45,9 @@ const HeaderSection = ({profilePicture, firstName, onNotificationClicked}: HomeH
             </View>
             ) : (
             <View style={{flexDirection: "row"}}>
-                <Text style={{color: theme.subText, textDecorationLine: "underline", fontSize: themeSize.md}}>Sign In</Text>
+                <Text onPress={onSignInClicked} style={{color: theme.subText, textDecorationLine: "underline", fontSize: themeSize.md}}>Sign In</Text>
                 <Text style={{color: theme.subText, fontSize: themeSize.md}}> \</Text>
-                <Text style={{color: theme.subText, textDecorationLine: "underline", fontSize: themeSize.md}}> Sign Up</Text>
+                <Text onPress={onSignUpClicked} style={{color: theme.subText, textDecorationLine: "underline", fontSize: themeSize.md}}> Sign Up</Text>
             </View>
             )}
             
