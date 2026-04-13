@@ -10,7 +10,9 @@ export interface CreateProductPayload {
   pName: string;
   pDetail: string;
   pAmount: number;
+  pDiscount?: number;
   pCondition: ProductCondition;
+  pQuantity: number;
   category: string;
   location: string;
   images: string[];
@@ -21,14 +23,17 @@ export interface ProductResponse {
   pName: string;
   pDetail: string;
   pAmount: number;
-  pDiscount: number;
+  pDiscount: number | null;
   pCondition: ProductCondition;
   pQuantity: number;
   category: string;
   location: string;
-  s_id: number;
+  sellerEmail: string | null;
+  sellerName: string | null;
+  sellerProfilePicture: string | null;
   status: "PENDING" | "READY" | "FAILED";
   imageUrls: string[];
+  createdAt: string;
 }
 
 export interface CreateProductResult {
@@ -46,6 +51,9 @@ export interface RecentListingItem {
   pQuality: string;
   location?: string;
   pDiscount?: string;
+  sellerEmail?: string | null;
+  sellerName?: string | null;
+  sellerProfilePicture?: string | null;
   status?: "PENDING" | "READY" | "FAILED";
 }
 
@@ -59,7 +67,6 @@ export interface ProductStore {
   images: string[];
 
   recentListings: RecentListingItem[];
-
   loading: boolean;
   error: string | null;
   successMessage: string | null;
@@ -77,10 +84,7 @@ export interface ProductStore {
 
   setRecentListings: (products: RecentListingItem[]) => void;
   addRecentListing: (product: RecentListingItem) => void;
-  updateRecentListing: (
-    id: string,
-    updated: Partial<RecentListingItem>
-  ) => void;
+  updateRecentListing: (id: string, updated: Partial<RecentListingItem>) => void;
 
   loadRecentListings: () => Promise<void>;
   createProduct: () => Promise<CreateProductResult>;

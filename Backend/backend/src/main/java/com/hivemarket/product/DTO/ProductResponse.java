@@ -5,17 +5,19 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 public record ProductResponse(
-        Long id,
-        String pName,
-        String pDetail,
-        BigDecimal pAmount,
-        BigDecimal pDiscount,
-        String pCondition,
-        Integer pQuantity,
-        String category,
-        String location,
-        Long s_id,
-        String status,
-        List<String> imageUrls,
-        LocalDateTime createdAt
+    Long id,
+    String pName,
+    String pDetail,
+    BigDecimal pAmount,
+    BigDecimal pDiscount,
+    String pCondition,
+    Integer pQuantity,
+    String category,
+    String location,
+    String sellerEmail,
+    String sellerName,
+    String sellerProfilePicture,
+    String status,
+    List<String> imageUrls,
+    LocalDateTime createdAt
 ) {}

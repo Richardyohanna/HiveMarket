@@ -1,23 +1,38 @@
 import { Colors, FontSize } from '@/constants/theme';
+import { userStore } from '@/src/store/userStore';
 import { router } from 'expo-router';
 import React from 'react';
-import { Image, ImageSourcePropType, Pressable, Text, useColorScheme, View } from 'react-native';
+import { Image, Pressable, Text, useColorScheme, View } from 'react-native';
+
 
 type HomeHeaderProp = {
-    profilePicture: ImageSourcePropType;
-    firstName: string;
+
     onNotificationClicked: () => void;
 }
 
 
-const HeaderSection = ({profilePicture, firstName, onNotificationClicked}: HomeHeaderProp) => {
+const HeaderSection = ({ onNotificationClicked}: HomeHeaderProp) => {
 
+    const {email, full_name, profile_picture, gender} = userStore();
+    console.log("HeaderVars" + email, full_name)
     //require("../../assets/images/HomeScreen/profilePicture.png")
     const login = false
 
     const scheme = useColorScheme();
     const themeSize = FontSize.size;
     const theme = scheme === "dark" ? Colors.dark : Colors.light;
+
+    //const {userData} = useLocalSearchParams()
+
+    //const [userData, setUserData] = useState<any | null>(null);
+
+    //useEffect(()=>{
+
+
+
+   // },[email])
+
+   console.log(profile_picture, "This is the Header Profile picture");
 
     const onProfileImage = () => {
         router.navigate("/ProfileScreen/ProfileScreen");
@@ -31,17 +46,33 @@ const HeaderSection = ({profilePicture, firstName, onNotificationClicked}: HomeH
         router.navigate("/CreateAccount/CreateAccountScreen");
     }   
 
+    console.log(full_name, email, "Email and FullName ");
   return (
     <View style={{ width: "100%", alignItems: "center", justifyContent: "flex-start", flexDirection: "row"}}>
         <View style={{flexDirection: "row", flex: 1, gap: 15, alignItems: "center"}}>
             <Pressable onPress={onProfileImage}>
-                <Image source={profilePicture} style={{width: 40, height: 40, borderRadius: 50, borderWidth: 1, borderColor: "rgba(200,200,200,0.5)" }} />
+                <Image 
+                    source={
+                        profile_picture != ""
+                        ? { uri: profile_picture } :
+                        gender === "Female" ?
+                        require('@/assets/images/CreateAccount/femaleUser.png')
+                        : require('@/assets/images/CreateAccount/user.png')
+                  } 
+                        
+                    style={{
+                        width: 40, 
+                        height: 40, 
+                        borderRadius: 50, 
+                        borderWidth: 1, 
+                        borderColor: "rgba(200,200,200,0.5)" 
+                        }} />
             </Pressable>
             
-            {login ? (
+            {email  ? (
             <View style={{gap: 3}}>
                 <Text style={{color: theme.text, fontSize: themeSize.sm, fontWeight: "200", letterSpacing: 1.5}}>WELCOME BACK</Text>
-                <Text style={{color: theme.text, fontSize: themeSize.md, fontWeight: "700", letterSpacing: 1}}>Hi, {firstName} 👋 </Text>
+                <Text style={{color: theme.text, fontSize: themeSize.md, fontWeight: "700", letterSpacing: 1}}>Hi, {full_name} 👋 </Text>
             </View>
             ) : (
             <View style={{flexDirection: "row"}}>

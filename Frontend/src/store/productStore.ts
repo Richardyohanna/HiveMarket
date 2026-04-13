@@ -80,7 +80,7 @@ export const useProductStore = create<ProductStore>((set, get) => ({
 
   addRecentListing: (product: RecentListingItem) =>
     set((state) => ({
-      recentListings: [...state.recentListings, product],
+      recentListings: [product, ...state.recentListings],
     })),
 
   updateRecentListing: (id: string, updated: Partial<RecentListingItem>) =>
@@ -106,6 +106,9 @@ export const useProductStore = create<ProductStore>((set, get) => ({
         pTimePosted: item.createdAt ? formatTimeAgo(item.createdAt) : "Just now",
         pQuality: item.pCondition,
         location: item.location,
+        sellerEmail: item.sellerEmail,
+        sellerName: item.sellerName,
+        sellerProfilePicture: item.sellerProfilePicture,
         status: item.status,
       }));
 
@@ -117,8 +120,7 @@ export const useProductStore = create<ProductStore>((set, get) => ({
     } catch (error) {
       set({
         loading: false,
-        error:
-          error instanceof Error ? error.message : "Failed to fetch products",
+        error: error instanceof Error ? error.message : "Failed to fetch products",
       });
     }
   },
@@ -182,10 +184,11 @@ export const useProductStore = create<ProductStore>((set, get) => ({
         pName: productName,
         pDetail: description,
         pAmount: Number(price),
+        pDiscount: 0,
         pCondition: condition,
+        pQuantity: 1,
         category,
         location,
-        images: currentImages,
       });
 
       const optimisticItem: RecentListingItem = {
@@ -194,8 +197,13 @@ export const useProductStore = create<ProductStore>((set, get) => ({
         pName: createdProduct.pName,
         pDetail: createdProduct.pDetail,
         pAmount: String(createdProduct.pAmount),
-        pTimePosted: createdProduct.createdAt ? formatTimeAgo(createdProduct.createdAt) : "Just now",
+        pTimePosted: createdProduct.createdAt
+          ? formatTimeAgo(createdProduct.createdAt)
+          : "Just now",
         pQuality: createdProduct.pCondition,
+        sellerEmail: createdProduct.sellerEmail,
+        sellerName: createdProduct.sellerName,
+        sellerProfilePicture: createdProduct.sellerProfilePicture,
         status: "PENDING",
       };
 
@@ -248,8 +256,7 @@ export const useProductStore = create<ProductStore>((set, get) => ({
     } catch (error) {
       set({
         loading: false,
-        error:
-          error instanceof Error ? error.message : "Something went wrong",
+        error: error instanceof Error ? error.message : "Something went wrong",
         successMessage: null,
       });
 

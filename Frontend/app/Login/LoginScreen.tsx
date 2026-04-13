@@ -1,5 +1,8 @@
 import { Colors, FontSize } from '@/constants/theme';
+import { getUserData } from '@/src/api/userApi';
 import { loginUser } from "@/src/services/authApi";
+import { userStore } from '@/src/store/userStore';
+import { UserStoreData } from '@/src/types/User';
 import { router } from 'expo-router';
 import React, { useState } from 'react';
 import {
@@ -18,14 +21,29 @@ import {
 } from 'react-native';
 
 const LoginScreen = () => {
+
+  const {
+    email , 
+    setEmail, 
+    setFullName, 
+    setProfilePicture,
+    setCampus,
+    setLocation,
+    setUniversity,
+    setGender,
+    setRole,
+
+  } = userStore();
+
   const scheme = useColorScheme();
   const themeSize = FontSize.size;
   const theme = scheme === "dark" ? Colors.dark : Colors.light;
 
-  const [email, setEmail] = useState("");
+  //const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [userData, setUserData] = useState<UserStoreData | null>(null);
 
   const onSignupPress = () => {
     router.replace("/CreateAccount/CreateAccountScreen");
@@ -43,9 +61,38 @@ const LoginScreen = () => {
       const response = await loginUser({
         email: email.trim(),
         password: password.trim(),
+      }).then(() => {
+
+        if(!email) return;
+        getUserData(email , (data) => {
+            console.log("userData from the Login Section Screen ", data);
+            
+            if(data)              
+            setFullName(data.full_name);
+            setProfilePicture(data.profile_picture);
+            setCampus(data.campus);
+            setUniversity(data.university);
+            setLocation(data.location);
+
+            setGender(data.gender)
+            
+            if(data.role)
+            setRole(data.role)
+            //setUserData(data);
+        }).then(() => {
+
+      router.replace(
+        {
+          pathname:"/BottomTab/BotttomTabNav",
+          //params: {userData: userData}
+        }); 
+
+        });
       });
 
-      router.replace("/HomeScreen/HomeScreen"); 
+      
+
+  
       // change this to your home route
     } catch (error: any) {
       Alert.alert("Login Failed", error.message || "Something went wrong");

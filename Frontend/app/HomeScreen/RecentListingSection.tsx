@@ -27,6 +27,8 @@ const RecentListingSection = () => {
   
   
   useEffect(() => {
+
+    if(!loadRecentListings) return;
     loadRecentListings();
   }, [loadRecentListings]);
 
@@ -82,14 +84,14 @@ const onProductClicked = (id: string) => {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={style.rl_list}
       >
-        {recentListings.length === 0 ? (
+        {recentListings && recentListings.length === 0 ? (
           <Text style={{ color: theme.text, opacity: 0.6 }}>
             No recent listings yet
           </Text>
         ) : (
-          recentListings.map((item) => (
+         recentListings && recentListings.map((item) => (
             <Pressable
-              onPress={() => {onProductClicked(item.id); console.log(item.id, "quick check")}}
+              onPress={() => {onProductClicked(item.id); }}
               key={item.id}
               style={[
                 style.pd,

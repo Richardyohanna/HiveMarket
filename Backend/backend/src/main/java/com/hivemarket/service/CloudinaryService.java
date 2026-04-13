@@ -29,4 +29,15 @@ public class CloudinaryService {
 			throw new RuntimeException("Image upload failed", e);
 		}
 	}
+	
+	public String uploadProfilePicture(MultipartFile profilePicture) {
+		
+		try {
+			Map<?, ?> uploadResult = cloudinary.uploader().upload(profilePicture.getBytes(), ObjectUtils.asMap("folder", "hivemarket/profilePictures"));
+			
+			return uploadResult.get("secure_url").toString();
+		} catch (IOException e) {
+			throw new RuntimeException("profile picture Upload failed", e);
+		}
+	}
 }

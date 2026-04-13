@@ -1,6 +1,6 @@
 import { saveToken } from "./authStorage";
 
-const BASE_URL = "http://172.20.10.8:8080/api/auth";
+const BASE_URL = "http://192.168.0.132:8080/api/auth";
 // replace with your laptop IP address
 
 export interface LoginRequest {
@@ -34,13 +34,15 @@ export async function loginUser(data: LoginRequest): Promise<AuthResponse> {
 
   saveToken(text); // Save the token for debugging purposes
   
-  console.log("Login response text:", text);
-
   if (!response.ok) {
     throw new Error(text || "Login failed");
   }
 
-  return JSON.parse(text);
+  const parsed: AuthResponse = JSON.parse(text);
+
+  await saveToken(parsed.token);
+
+  return parsed;
 }
 
 export async function registerUser(data: RegisterRequest): Promise<AuthResponse> {
@@ -53,6 +55,11 @@ export async function registerUser(data: RegisterRequest): Promise<AuthResponse>
   });
 
   const text = await response.text();
+  
+  console.log("Login response text:", text);
+  
+
+   saveToken(text);
 
   if (!response.ok) {
     throw new Error(text || "Registration failed");

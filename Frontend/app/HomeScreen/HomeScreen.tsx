@@ -7,13 +7,13 @@ import { Image, Pressable, StatusBar, StyleSheet, TextInput, useColorScheme, Vie
 import FeaturedProductSection from './FeaturedProductSection'
 import HeaderSection from './HeaderSection'
 import RecentListingSection from './RecentListingSection'
+import { userStore } from '@/src/store/userStore'
 
-const HeaderData = {
-    profilePicture: require("../../assets/images/HomeScreen/profilePicture.png"),
-    firstName: "Richard"
-}
+
 
 const HomeScreen = () => {
+
+ 
 
  const scheme = useColorScheme();
  const loadingRecentListings = useProductStore((state) => state.loading);
@@ -34,7 +34,7 @@ const HomeScreen = () => {
         barStyle={scheme === "dark" ? "light-content" : "dark-content"}
       />
 
-      <HeaderSection profilePicture={HeaderData.profilePicture} firstName={HeaderData.firstName} onNotificationClicked={onNotificationClicked}/>
+      <HeaderSection  onNotificationClicked={onNotificationClicked}/>
        
       <ScrollWithRefresh horizontal={false} showsHorizontalScrollIndicator={false} showsVerticalScrollIndicator={false} contentContainerStyle={{gap: 20}}
         onRefresh={() => {

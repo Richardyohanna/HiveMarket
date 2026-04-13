@@ -1,15 +1,16 @@
 import { getToken } from "../services/authStorage";
 
-const BASE_URL = "http://172.20.10.8:8080/api/products";
+const BASE_URL = "http://192.168.0.132:8080/api/products";
 
 export interface BackendProductRequest {
   pName: string;
   pDetail: string;
   pAmount: number;
+  pDiscount?: number;
   pCondition: string;
+  pQuantity: number;
   category: string;
   location: string;
-  images: string[];
 }
 
 export interface ProductResponse {
@@ -17,12 +18,14 @@ export interface ProductResponse {
   pName: string;
   pDetail: string;
   pAmount: number;
-  pDiscount: number;
+  pDiscount: number | null;
   pCondition: string;
   pQuantity: number;
   category: string;
   location: string;
-  s_id: number;
+  sellerEmail: string | null;
+  sellerName: string | null;
+  sellerProfilePicture: string | null;
   status: "PENDING" | "READY" | "FAILED";
   imageUrls: string[];
   createdAt: string;
@@ -37,11 +40,10 @@ async function fetchWithTimeout(
   const timeoutId = setTimeout(() => controller.abort(), timeout);
 
   try {
-    const response = await fetch(input, {
+    return await fetch(input, {
       ...init,
       signal: controller.signal,
     });
-    return response;
   } finally {
     clearTimeout(timeoutId);
   }
@@ -50,53 +52,34 @@ async function fetchWithTimeout(
 export async function createProductOnlyApi(
   data: BackendProductRequest
 ): Promise<ProductResponse> {
+  const token = await getToken();
+
+  if (!token) {
+    throw new Error("No token found");
+  }
+
   const requestBody = {
     pName: data.pName,
     pDetail: data.pDetail,
     pAmount: data.pAmount,
-    pDiscount: 2000,
+    pDiscount: data.pDiscount ?? 0,
     pCondition: data.pCondition,
-    pQuantity: 2,
+    pQuantity: data.pQuantity,
     category: data.category,
     location: data.location,
-    s_id: 3,
   };
-  const token = await getToken();
 
-  console.log("Creating product with:", requestBody);
-  console.log("POST URL:", BASE_URL);
-
-  let response: Response;
-
-  try {
-    response = await fetchWithTimeout(
-      BASE_URL,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(requestBody),
-      },
-      15000
-    );
-  } catch (error: any) {
-    if (error?.name === "AbortError") {
-      throw new Error(
-        "Request timed out. Check your server, IP address, or network connection."
-      );
-    }
-
-    throw new Error(
-      "Could not connect to server. Make sure your Spring Boot server is running and your phone can reach it."
-    );
-  }
+  const response = await fetchWithTimeout(BASE_URL, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Accept: "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(requestBody),
+  });
 
   const responseText = await response.text();
-  console.log("Create product status:", response.status);
-  console.log("Create product response:", responseText);
 
   if (!response.ok) {
     throw new Error(responseText || "Failed to create product");
@@ -109,16 +92,18 @@ export async function uploadProductImagesApi(
   productId: number,
   imageUris: string[]
 ): Promise<ProductResponse> {
-  const formData = new FormData();
   const token = await getToken();
 
+  if (!token) {
+    throw new Error("No token found");
+  }
+
+  const formData = new FormData();
 
   imageUris.forEach((uri, index) => {
     const fileName = uri.split("/").pop() || `image_${index}.jpg`;
     const ext = fileName.split(".").pop()?.toLowerCase() || "jpg";
-  
-    
-  
+
     formData.append("images", {
       uri,
       name: fileName,
@@ -131,35 +116,16 @@ export async function uploadProductImagesApi(
     } as any);
   });
 
-  console.log("Uploading images to:", `${BASE_URL}/${productId}/images`);
-  console.log("Image count:", imageUris.length);
-
-  let response: Response;
-
-  try {
-    response = await fetchWithTimeout(
-      `${BASE_URL}/${productId}/images`,
-      {
-        method: "POST",
-        body: formData,
-        headers: {
-          Accept: "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      },
-      30000
-    );
-  } catch (error: any) {
-    if (error?.name === "AbortError") {
-      throw new Error("Image upload timed out.");
-    }
-
-    throw new Error("Could not connect to server for image upload.");
-  }
+  const response = await fetchWithTimeout(`${BASE_URL}/${productId}/images`, {
+    method: "POST",
+    body: formData,
+    headers: {
+      Accept: "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+  }, 30000);
 
   const responseText = await response.text();
-  console.log("Upload images status:", response.status);
-  console.log("Upload images response:", responseText);
 
   if (!response.ok) {
     throw new Error(responseText || "Failed to upload product images");
@@ -169,26 +135,14 @@ export async function uploadProductImagesApi(
 }
 
 export async function getAllProductsApi(): Promise<ProductResponse[]> {
-  let response: Response;
-
-  try {
-    response = await fetchWithTimeout(
-      `${BASE_URL}/all`,
-      {
-        method: "GET",
-        headers: {
-          Accept: "application/json",
-        },
-      },
-      15000
-    );
-  } catch {
-    throw new Error("Could not connect to server.");
-  }
+  const response = await fetchWithTimeout(`${BASE_URL}/all`, {
+    method: "GET",
+    headers: {
+      Accept: "application/json",
+    },
+  });
 
   const responseText = await response.text();
- 
-
 
   if (!response.ok) {
     throw new Error(responseText || "Failed to fetch products");

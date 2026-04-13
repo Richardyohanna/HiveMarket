@@ -1,6 +1,5 @@
 package com.hivemarket.user.service;
 
-
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -26,7 +25,7 @@ public class AuthService {
 		}
 		
 		User user = User.builder()
-				.fullName(request.fullName())
+				.full_name(request.fullName())
 				.email(request.email())
 				.password(passwordEncoder.encode(request.password()))
 				.enabled(true)

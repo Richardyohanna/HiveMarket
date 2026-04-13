@@ -1,23 +1,27 @@
 import { create } from "zustand";
-import { UserStore } from "../types/User";
+import { User, UserStoreData } from "../types/User";
 
-const initialState: UserStore = {
-    fullName: "",
+const initialState: User = {
+    full_name: "",
     email: "",
-    role: "exlorer",   
-    profilePicture: require("../../assets/images/HomeScreen/profilePicture.png "),
+    role: "",   
+    gender: "",
+    profile_picture: "",
     university: "",
     location: "",
+    campus: "",
 }
-export const userStore = create<UserStore>((set, get) => ({
+export const userStore = create<UserStoreData>((set, get) => ({
     ...initialState,
 
-    setFullName: (value: string) => set({fullName: value}),
+    setFullName: (value: string) => set({full_name: value}),
     setEmail: (value: string) => set({email: value}),
     setRole: (value: string) => set({role: value}),
-    setProfilePicture: (value: any) => set({profilePicture: value}),
+    setGender: (value: string) => set({gender: value}),
+    setProfilePicture: (value: string) => set({profile_picture: value}),
     setUniversity: (value: string) => set({university: value}),
     setLocation: (value: string) => set({location: value}),
+    setCampus: (value: string) => set({campus: value}),
 
-    updateProfilePicture: (newPicture: any) => set({profilePicture: newPicture}),
+    
 }))

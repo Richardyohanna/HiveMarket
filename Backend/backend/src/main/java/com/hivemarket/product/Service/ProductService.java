@@ -14,6 +14,8 @@ import com.hivemarket.product.Entity.Product;
 import com.hivemarket.product.Repository.ImageRepository;
 import com.hivemarket.product.Repository.ProductRepository;
 import com.hivemarket.service.CloudinaryService;
+import com.hivemarket.user.entity.User;
+import com.hivemarket.user.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
 
@@ -24,26 +26,26 @@ public class ProductService {
     private final ProductRepository productRepository;
     private final ImageRepository imageRepository;
     private final CloudinaryService cloudinaryService;
+    private final UserRepository userRepository;
 
-    public ProductResponse mapResponse(Product product) {
+    private ProductResponse mapResponse(Product product) {
         List<String> imageUrls = product.getImages() == null
                 ? new ArrayList<>()
-                : product.getImages()
-                        .stream()
-                        .map(Image::getImageUrl)
-                        .toList();
+                : product.getImages().stream().map(Image::getImageUrl).toList();
 
         return new ProductResponse(
                 product.getId(),
-                product.getpName(),
-                product.getpDetail(),
-                product.getpAmount(),
-                product.getpDiscount(),
-                product.getpCondition(),
-                product.getpQuantity(),
+                product.getPName(),
+                product.getPDetail(),
+                product.getPAmount(),
+                product.getPDiscount(),
+                product.getPCondition(),
+                product.getPQuantity(),
                 product.getCategory(),
                 product.getLocation(),
-                product.getS_id(),
+                product.getSeller() != null ? product.getSeller().getEmail() : null,
+                product.getSeller() != null ? product.getSeller().getFull_name() : null,
+                product.getSeller() != null ? product.getSeller().getProfile_picture() : null,
                 product.getStatus(),
                 imageUrls,
                 product.getCreatedAt()
@@ -51,7 +53,10 @@ public class ProductService {
     }
 
     @Transactional
-    public ProductResponse createProductOnly(CreateProduct request) {
+    public ProductResponse createProductOnly(CreateProduct request, String email) {
+        User seller = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Seller not found"));
+
         Product product = Product.builder()
                 .pName(request.pName())
                 .pDetail(request.pDetail())
@@ -61,7 +66,7 @@ public class ProductService {
                 .pQuantity(request.pQuantity())
                 .location(request.location())
                 .category(request.category())
-                .s_id(request.s_id())
+                .seller(seller)
                 .status("PENDING")
                 .build();
 
@@ -89,16 +94,10 @@ public class ProductService {
             }
 
             imageRepository.saveAll(imageList);
-
-            if (product.getImages() == null) {
-                product.setImages(new ArrayList<>());
-            }
-
             product.getImages().addAll(imageList);
             product.setStatus("READY");
 
             Product updated = productRepository.save(product);
-
             return mapResponse(updated);
 
         } catch (Exception e) {
@@ -111,70 +110,61 @@ public class ProductService {
     @Transactional(readOnly = true)
     public ProductResponse getProductById(Long id) {
         Product product = productRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Product not Found"));
+                .orElseThrow(() -> new RuntimeException("Product not found"));
 
         return mapResponse(product);
     }
 
     @Transactional(readOnly = true)
     public List<ProductResponse> getAllProducts() {
-        List<Product> products = productRepository.findAll();
+        return productRepository.findAll().stream()
+                .map(this::mapResponse)
+                .toList();
+    }
 
-        return products.stream()
+    @Transactional(readOnly = true)
+    public List<ProductResponse> getAvailableProducts() {
+        return productRepository.findByStatus("READY").stream()
+                .map(this::mapResponse)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<ProductResponse> getMyProducts(String email) {
+        return productRepository.findBySellerEmail(email).stream()
+                .map(this::mapResponse)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<ProductResponse> getMyProductsByStatus(String email, String status) {
+        return productRepository.findBySellerEmailAndStatus(email, status).stream()
                 .map(this::mapResponse)
                 .toList();
     }
 
     public String deleteProductById(long id) {
         if (!productRepository.existsById(id)) {
-            throw new RuntimeException("Cannot Find the Product with id: " + id);
+            throw new RuntimeException("Cannot find product with id: " + id);
         }
 
         productRepository.deleteById(id);
-        return "Product with id " + id + " Deleted Successfully";
-    }
-
-    public String deleteAll() {
-        productRepository.deleteAll();
-        return "Deleted all the Products Successfully";
+        return "Product deleted successfully";
     }
 
     @Transactional
     public ProductResponse updateById(long id, CreateProduct update) {
         Product product = productRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Cannot find the data"));
+                .orElseThrow(() -> new RuntimeException("Cannot find product"));
 
-        if (update.pName() != null) {
-            product.setpName(update.pName());
-        }
-
-        if (update.pDetail() != null) {
-            product.setpDetail(update.pDetail());
-        }
-
-        if (update.pAmount() != null) {
-            product.setpAmount(update.pAmount());
-        }
-
-        if (update.pDiscount() != null) {
-            product.setpDiscount(update.pDiscount());
-        }
-
-        if (update.pCondition() != null) {
-            product.setpCondition(update.pCondition());
-        }
-
-        if (update.pQuantity() != null) {
-            product.setpQuantity(update.pQuantity());
-        }
-
-        if (update.category() != null) {
-            product.setCategory(update.category());
-        }
-
-        if (update.location() != null) {
-            product.setLocation(update.location());
-        }
+        product.setPName(update.pName());
+        product.setPDetail(update.pDetail());
+        product.setPAmount(update.pAmount());
+        product.setPDiscount(update.pDiscount());
+        product.setPCondition(update.pCondition());
+        product.setPQuantity(update.pQuantity());
+        product.setCategory(update.category());
+        product.setLocation(update.location());
 
         Product updated = productRepository.save(product);
         return mapResponse(updated);

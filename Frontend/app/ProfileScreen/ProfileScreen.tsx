@@ -1,9 +1,12 @@
 import { Colors, FontSize } from '@/constants/theme';
+import { userStore } from '@/src/store/userStore';
 import { router } from 'expo-router';
 import React from 'react';
 import { Image, Pressable, Text, useColorScheme, View } from 'react-native';
 
 const ProfileScreen = () => {
+
+const {profile_picture, full_name, university, campus, email, location, gender} = userStore();
 
 const scheme = useColorScheme();
 const themeSize = FontSize.size;
@@ -59,9 +62,24 @@ const theme = scheme === "dark" ? Colors.dark : Colors.light;
 
         <View style={{backgroundColor: theme.screenBackground , flex: 1}}>
             <View style={{ justifyContent: "center", alignItems: "center"}}>
-                <Image source={require("../../assets/images/Profile/profilePicture.png")} style={{alignSelf: "center", marginTop: 25, width: 128, height: 128, borderRadius: 50}} />
-                <Text style={{color: theme.text, fontSize: themeSize.lg, fontWeight: "bold", marginTop: 5}}>Richard Yohanna</Text>
-                <Text style={{color: theme.subText, }}>Abubakar Tafawa Balewa University</Text>
+                <Image                 
+                    source={
+                            profile_picture != ""
+                            ? { uri: profile_picture } :
+                            gender === "Female" ?
+                            require('@/assets/images/CreateAccount/femaleUser.png')
+                            : require('@/assets/images/CreateAccount/user.png')
+                    }                     
+                    style={{
+                        alignSelf: "center", 
+                        marginTop: 25, 
+                        width: 128, 
+                        height: 128, 
+                        borderRadius: 50}} 
+                        />
+                <Text style={{color: theme.text, fontSize: themeSize.lg, fontWeight: "bold", marginTop: 5}}>{full_name}</Text>
+                <Text style={{color: theme.subText, }}>{university} {campus} </Text>
+                <Text style={{color: theme.subText, }}> {email}</Text>
                 <Text style={{color: theme.readColor}}> Member since 2023</Text>
             </View>
 

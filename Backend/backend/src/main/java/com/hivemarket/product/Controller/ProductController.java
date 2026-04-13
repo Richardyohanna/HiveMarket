@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -33,8 +34,13 @@ public class ProductController {
 
     // Step 1: Create product only
     @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ProductResponse createProductOnly(@Valid @RequestBody CreateProduct request) {
-        return productService.createProductOnly(request);
+    public ProductResponse createProductOnly(@Valid @RequestBody CreateProduct request, Authentication authentication) {
+    	
+    	String email = authentication.getName();
+    	
+    	System.out.println("This is the email from authentication " + email);
+    	
+        return productService.createProductOnly(request, email);
     }
 
     // Step 2: Upload images later
@@ -61,11 +67,6 @@ public class ProductController {
         return ResponseEntity.ok(response);
     }
 
-    @DeleteMapping("/all")
-    public ResponseEntity<String> deleteAll() {
-        String response = productService.deleteAll();
-        return ResponseEntity.ok(response);
-    }
 
     @PutMapping
     public ProductResponse update(@Valid @RequestParam long id, @Valid @RequestBody CreateProduct updateProduct) {

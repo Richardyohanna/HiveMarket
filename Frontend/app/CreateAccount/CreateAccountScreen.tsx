@@ -1,6 +1,7 @@
 import { Colors, FontSize } from '@/constants/theme';
 import { registerUser } from '@/src/services/authApi';
 import { saveToken } from '@/src/services/authStorage';
+import { userStore } from '@/src/store/userStore';
 import { router } from 'expo-router';
 import React, { useState } from 'react';
 import {
@@ -19,22 +20,35 @@ import {
 } from 'react-native';
 
 const CreateAccountScreen = () => {
+
+  const {
+    full_name,
+    email,
+    
+    setFullName,
+    setEmail,
+    
+  } = userStore()
+
   const scheme = useColorScheme();
   const themeSize = FontSize.size;
   const theme = scheme === "dark" ? Colors.dark : Colors.light;
 
-  const [fullName, setFullName] = useState("");
-  const [email, setEmail] = useState("");
+  //const [fullName, setFullName] = useState("");
+  //const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
+
+
+
 
   const onLogin = () => {
     router.replace("/Login/LoginScreen");
   };
 
   const handleRegister = async () => {
-    if (!fullName.trim() || !email.trim() || !password.trim() || !confirmPassword.trim()) {
+    if (!full_name.trim() || !email.trim() || !password.trim() || !confirmPassword.trim()) {
       Alert.alert("Validation Error", "Please fill all fields");
       return;
     }
@@ -48,7 +62,7 @@ const CreateAccountScreen = () => {
       setLoading(true);
 
       const response = await registerUser({
-        fullName: fullName.trim(),
+        fullName: full_name.trim(),
         email: email.trim(),
         password: password.trim(),
       });
@@ -57,7 +71,9 @@ const CreateAccountScreen = () => {
 
       Alert.alert("Success", "Account created successfully");
 
-      router.replace("/");
+      router.replace( {
+        pathname: "/CreateAccount/RoleScreen",
+    });
       // change to your app home route
     } catch (error: any) {
       Alert.alert("Registration Failed", error.message || "Something went wrong");
@@ -114,7 +130,7 @@ const CreateAccountScreen = () => {
               placeholder="Full Name"
               placeholderTextColor={scheme === "dark" ? "#aaa" : "#666"}
               style={{ flex: 1, color: theme.text }}
-              value={fullName}
+              value={full_name}
               onChangeText={setFullName}
             />
           </View>
@@ -257,7 +273,7 @@ const style = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "flex-start",
     alignItems: "center",
-    padding: 10,
+    padding: 20,
     width: "100%",
     gap: 10,
     borderRadius: 40,

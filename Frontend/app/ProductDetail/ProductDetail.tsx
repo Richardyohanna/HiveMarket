@@ -1,14 +1,14 @@
 import { Colors, FontSize } from "@/constants/theme";
+import ScrollWithRefresh from "@/hooks/ScrollWithRefresh";
 import { useProductStore } from "@/src/store/productStore";
 import { router, useLocalSearchParams } from "expo-router";
 import React, { useEffect } from "react";
 import {
-    Image,
-    Pressable,
-    ScrollView,
-    Text,
-    useColorScheme,
-    View,
+  Image,
+  Pressable,
+  Text,
+  useColorScheme,
+  View
 } from "react-native";
 
 const ProductDetail = () => {
@@ -75,7 +75,7 @@ const ProductDetail = () => {
           gap: 15,
         }}
       >
-        <Pressable onPress={onBack} style={{ width: 20 }}>
+        <Pressable onPress={onBack} style={{ width: 30, height: "100%",padding:5}}>
           <Image
             source={require("../../assets/images/ProductDetail/back.png")}
             style={{ tintColor: theme.text }}
@@ -110,9 +110,14 @@ const ProductDetail = () => {
         </Pressable>
       </View>
 
-      <ScrollView
+      <ScrollWithRefresh
         showsVerticalScrollIndicator={false}
         style={{ backgroundColor: theme.screenBackground }}
+        onRefresh={()=> {
+             if (recentListings.length === 0) {
+                loadRecentListings();
+              }
+        }}
       >
         <Image
           source={
@@ -288,7 +293,7 @@ const ProductDetail = () => {
             </Pressable>
           </View>
         </View>
-      </ScrollView>
+      </ScrollWithRefresh>
     </View>
   );
 };

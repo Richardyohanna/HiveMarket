@@ -1,7 +1,8 @@
 package com.hivemarket.product.DTO;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+
+
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -15,8 +16,8 @@ public record CreateProduct(
         @NotBlank String pCondition,
         @NotNull Integer pQuantity,
         @NotBlank String category,
-        @NotBlank String location,
-        @NotNull Long s_id
+        @NotBlank String location
+        
         
 
 ) {}
