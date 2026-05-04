@@ -1,6 +1,9 @@
+import { localURL } from "@/localURL";
 import { getToken } from "../services/authStorage";
 
-const BASE_URL = "http://192.168.0.132:8080/api/products";
+
+
+ const BASE_URL = `${localURL}/api/products`;
 
 export interface BackendProductRequest {
   pName: string;
@@ -11,6 +14,10 @@ export interface BackendProductRequest {
   pQuantity: number;
   category: string;
   location: string;
+  sellerEmail: string;
+  sellerName: string;
+  sellerImage: string;
+  
 }
 
 export interface ProductResponse {
@@ -29,6 +36,10 @@ export interface ProductResponse {
   status: "PENDING" | "READY" | "FAILED";
   imageUrls: string[];
   createdAt: string;
+
+  views: number;
+  purchases: number;
+  rating: number;
 }
 
 async function fetchWithTimeout(
@@ -67,6 +78,9 @@ export async function createProductOnlyApi(
     pQuantity: data.pQuantity,
     category: data.category,
     location: data.location,
+    sellerName: data.sellerName,
+    sellerImage: data.sellerImage,
+    sellerEmail: data.sellerEmail
   };
 
   const response = await fetchWithTimeout(BASE_URL, {
@@ -142,11 +156,47 @@ export async function getAllProductsApi(): Promise<ProductResponse[]> {
     },
   });
 
-  const responseText = await response.text();
+  const data = await response.json();
 
   if (!response.ok) {
-    throw new Error(responseText || "Failed to fetch products");
+    throw new Error("Failed to fetch products");
   }
 
-  return JSON.parse(responseText);
+  return data.map((p: any) => ({
+    ...p,
+    views: p.views ?? 0,
+    purchases: p.purchases ?? 0,
+    rating: p.rating ?? 0,
+  }));
+}
+
+export async function increaseProductPurchaseApi(id: string) {
+  const token = await getToken();
+
+  if (!token) return;
+
+  try {
+    await fetchWithTimeout(`${BASE_URL}/${id}/purchase`, {
+      method: "PUT",
+      headers: {
+        Accept: "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    });
+  } catch (err) {
+    console.log("Purchase tracking failed", err);
+  }
+}
+
+export async function increaseProductViewApi(id: string) {
+  try {
+    await fetchWithTimeout(`${BASE_URL}/${id}/view`, {
+      method: "PUT",
+      headers: {
+        Accept: "application/json",
+      },
+    });
+  } catch (err) {
+    console.log("View tracking failed", err);
+  }
 }

@@ -13,14 +13,13 @@ type HomeHeaderProp = {
 
 const HeaderSection = ({ onNotificationClicked}: HomeHeaderProp) => {
 
-    const {email, full_name, profile_picture, gender} = userStore();
-    console.log("HeaderVars" + email, full_name)
-    //require("../../assets/images/HomeScreen/profilePicture.png")
-    const login = false
-
     const scheme = useColorScheme();
     const themeSize = FontSize.size;
     const theme = scheme === "dark" ? Colors.dark : Colors.light;
+
+    const {email, full_name, profile_picture, gender} = userStore();
+
+
 
     //const {userData} = useLocalSearchParams()
 

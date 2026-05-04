@@ -1,5 +1,6 @@
 import { Colors, FontSize } from "@/constants/theme";
 import { useProductStore } from "@/src/store/productStore";
+import { userStore } from "@/src/store/userStore";
 import * as ImagePicker from "expo-image-picker";
 import { router } from "expo-router";
 import React, { useState } from "react";
@@ -37,6 +38,14 @@ const conditionOptions = [
 ] as const;
 
 const SellScreen = () => {
+
+   
+
+  const scheme = useColorScheme();
+  const themeSize = FontSize.size;
+  const theme = scheme === "dark" ? Colors.dark : Colors.light;
+
+
   const {
     productName,
     description,
@@ -54,13 +63,18 @@ const SellScreen = () => {
     setCategory,
     setCondition,
     setLocation,
+    setSellerEmail,
+    setSellerImage,
+    setSellerName,
     addImages,
     createProduct,
   } = useProductStore();
 
-  const scheme = useColorScheme();
-  const themeSize = FontSize.size;
-  const theme = scheme === "dark" ? Colors.dark : Colors.light;
+ 
+  const {full_name, profile_picture, email} = userStore();
+  
+
+
 
   const [imageIndex, setImageIndex] = useState(0);
   const [visible, setVisible] = useState(false);
@@ -95,6 +109,11 @@ const SellScreen = () => {
   };
 
   const handleSubmit = async () => {
+
+
+    //console.log("Hahah This ia the Email, profilepicture and name respectively ", email, profile_picture, full_name);
+
+
     const result = await createProduct();
 
     if (result.success) {
@@ -164,7 +183,7 @@ const SellScreen = () => {
               paddingBottom: 40,
             }}
           >
-            {images.length > 0 ? (
+            {images && images.length > 0 ? (
               <View
                 style={{
                   alignItems: "center",

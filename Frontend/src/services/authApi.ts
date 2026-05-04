@@ -1,6 +1,7 @@
+import { localURL } from "@/localURL";
 import { saveToken } from "./authStorage";
 
-const BASE_URL = "http://192.168.0.132:8080/api/auth";
+const BASE_URL = `${localURL}/api/auth`;
 // replace with your laptop IP address
 
 export interface LoginRequest {

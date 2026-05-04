@@ -1,129 +1,278 @@
-import { Colors, FontSize } from '@/constants/theme';
-import { router } from 'expo-router';
-import React from 'react';
-import { Image, ImageSourcePropType, Pressable, ScrollView, StyleSheet, Text, useColorScheme, View } from 'react-native';
+import { Colors, FontSize } from "@/constants/theme";
+import { increaseProductViewApi } from "@/src/api/productApi";
+import { useProductStore } from "@/src/store/productStore";
+import { router } from "expo-router";
+import React, { useMemo } from "react";
+import {
+  Image,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  useColorScheme,
+  View,
+} from "react-native";
 
-type FeaturedProductProp = {
-    id: string,
-    pImage: ImageSourcePropType,
-    pName: string,
-    pAmount: string,
-    pReview: string,
-}
-
-const FPData: FeaturedProductProp[] = [
-     {
-        id: "fet1",
-        pImage: require("../../assets/images/HomeScreen/fet2.png"),
-        pName: "Premium Headset New",
-        pAmount: "50, 000",
-        pReview: "4.5,"
-    },
-      {
-        id: "fet2",
-        pImage: require("../../assets/images/HomeScreen/fet1.png"),
-        pName: "Smart Watch Pro",
-        pAmount: "70, 000",
-        pReview: "4.3"
-    },
-         {
-        id: "fet3",
-        pImage: require("../../assets/images/HomeScreen/fet2.png"),
-        pName: "Premium Headset New",
-        pAmount: "500, 000",
-        pReview: "4.5,"
-    },
-      {
-        id: "fet4",
-        pImage: require("../../assets/images/HomeScreen/fet1.png"),
-        pName: "Smart Watch Pro",
-        pAmount: "700, 000",
-        pReview: "4.3"
-    }
-
-] 
+const PRIMARY      = "#008100";
+const PRIMARY_SOFT = "#e8f5e9";   // light tint
+const PRIMARY_DARK = "#1a3a1a";   // dark tint
 
 const FeaturedProductSection = () => {
+  const scheme  = useColorScheme();
+  const isDark  = scheme === "dark";
+  const theme   = isDark ? Colors.dark : Colors.light;
+  const fs      = FontSize.size;
 
-    const scheme = useColorScheme();
-    const themeSize = FontSize.size;
-    const theme = scheme === "dark" ? Colors.dark : Colors.light;
+  const products = useProductStore((state) => state.recentListings);
 
-    const onProductClicked = () => {
-        router.push("/ProductDetail/ProductDetail");
-    }
+  // ── Featured algorithm: weighted score ──
+  const featuredProducts = useMemo(() => {
+    return [...products]
+      .map((p) => ({
+        ...p,
+        score:
+          0.5 * (p.views     || 0) +
+          2.0 * (p.purchases || 0) +
+          0.2 * (p.rating    || 0),
+      }))
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 10);
+  }, [products]);
+
+  const onProductClicked = (id: string) => {
+    increaseProductViewApi(id);
+    router.push({ pathname: "/ProductDetail/ProductDetail", params: { id } });
+  };
+
+  if (featuredProducts.length === 0) return null;
 
   return (
-    <View style={style.fp}>
-      <View style={style.fp_heading}>
-        <Text style={{color: theme.text, fontSize: themeSize.lg, fontWeight: "700"}}>Featured Product</Text>
-        <Text style={{color: theme.subText, fontSize: 15, fontWeight: "600"}}>View all</Text>
+    <View style={styles.container}>
+      {/* ── Header ── */}
+      <View style={styles.header}>
+        <View style={styles.titleRow}>
+          <View style={[styles.titleAccent, { backgroundColor: PRIMARY }]} />
+          <Text style={[styles.title, { color: theme.text, fontSize: fs.lg }]}>
+            Featured Products
+          </Text>
+        </View>
+        <Pressable>
+          <Text style={[styles.viewAll, { color: PRIMARY }]}>View all</Text>
+        </Pressable>
       </View>
 
-    {/** Featured Product List */}
-      <ScrollView 
-        horizontal 
+      {/* ── Horizontal list ── */}
+      <ScrollView
+        horizontal
         showsHorizontalScrollIndicator={false}
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={style.pd_list}
-       >
+        contentContainerStyle={styles.list}
+      >
+        {featuredProducts.map((item, index) => {
+          const isNew = item.pQuality === "NEW";
 
-        {FPData.map((item) => (
+          return (
+            <Pressable
+              key={item.id}
+              onPress={() => onProductClicked(item.id)}
+              style={[
+                styles.card,
+                {
+                  backgroundColor: theme.sectionBackground,
+                  borderColor: isDark ? PRIMARY_DARK : "#e4f0e4",
+                },
+              ]}
+            >
+              {/* ── Image ── */}
+              <View style={styles.imgWrapper}>
+                <Image
+                  source={
+                    item.pImage
+                      ? { uri: item.pImage }
+                      : require("../../assets/images/HomeScreen/nike.png")
+                  }
+                  style={styles.img}
+                  resizeMode="cover"
+                />
 
-            <Pressable key={item.id} 
-                onPress={onProductClicked}
-                style={[
-                    style.pd, 
-                    {
-                      backgroundColor: scheme === "dark" ? "#1E293B" : "#f2f2f26e"
-            }]}>
-                <Pressable onPress={onProductClicked}>
-                    <Image source={item.pImage} style={{width: 135, height: 169 , borderRadius: 20}} />
+                {/* Rank badge — top 3 get a medal */}
+                {index < 3 && (
+                  <View style={[styles.rankBadge, { backgroundColor: PRIMARY }]}>
+                    <Text style={styles.rankText}>
+                      {index === 0 ? "🥇" : index === 1 ? "🥈" : "🥉"}
+                    </Text>
+                  </View>
+                )}
+
+                {/* Condition pill */}
+                {item.pQuality && (
+                  <View
+                    style={[
+                      styles.conditionPill,
+                      { backgroundColor: isNew ? PRIMARY : "#b45309" },
+                    ]}
+                  >
+                    <Text style={styles.conditionText}>{item.pQuality}</Text>
+                  </View>
+                )}
+
+                {/* Wishlist */}
+                <Pressable
+                  style={[
+                    styles.wishlistBtn,
+                    { backgroundColor: isDark ? PRIMARY_DARK : "#fff" },
+                  ]}
+                >
+                  <Text style={{ fontSize: 13 }}>🤍</Text>
                 </Pressable>
-                
-                <Text onPress={onProductClicked} numberOfLines={1} ellipsizeMode='tail' style={{color: theme.text, fontWeight: "700"}}>{item.pName}</Text>
-                <View style={{flexDirection: "row", width: "100%", justifyContent: "space-between", alignItems: "center"}}>
-                    <Text style={{color: theme.subText, flex: 1, fontWeight: "bold"}}>₦{item.pAmount}</Text>
-                    <Text style={{fontSize: themeSize.xsm, fontWeight: "700", color: theme.text}}><Text style={{color: "#EAB308"}}>★</Text>{item.pReview}</Text>
+              </View>
+
+              {/* ── Card body ── */}
+              <View style={styles.cardBody}>
+                {/* Name */}
+                <Text numberOfLines={1} style={[styles.cardName, { color: theme.text }]}>
+                  {item.pName}
+                </Text>
+
+                {/* Location */}
+                {item.location ? (
+                  <View style={styles.locationRow}>
+                    <Text style={[styles.locationPin, { color: PRIMARY }]}>📍</Text>
+                    <Text
+                      numberOfLines={1}
+                      style={[styles.locationText, { color: theme.readColor }]}
+                    >
+                      {item.location}
+                    </Text>
+                  </View>
+                ) : null}
+
+                {/* Price + Rating */}
+                <View style={styles.priceRow}>
+                  <Text style={[styles.price, { color: PRIMARY }]}>
+                    ₦{Number(item.pAmount).toLocaleString()}
+                  </Text>
+                  <View style={styles.ratingPill}>
+                    <Text style={styles.star}>★</Text>
+                    <Text style={[styles.ratingText, { color: theme.readColor }]}>
+                      {Number(item.rating || 0).toFixed(1)}
+                    </Text>
+                  </View>
                 </View>
-                <Pressable style={{position: "absolute", top: 35, right: 25, backgroundColor:  scheme === "dark" ? "#1E293B" : "#fffcfc", padding: 8, borderRadius: 50 }}>
-                    <Image source={require("../../assets/images/HomeScreen/react.png") } />
-                </Pressable>
-            </Pressable>
-        ))}
 
+                {/* Views */}
+                {(item.views ?? 0) > 0 && (
+                  <Text style={[styles.views, { color: theme.readColor }]}>
+                    👁  {item.views} views
+                  </Text>
+                )}
+
+                {/* Buy button */}
+                <Pressable
+                  style={styles.buyBtn}
+                  onPress={() => onProductClicked(item.id)}
+                >
+                  <Text style={styles.buyBtnText}>Buy Now</Text>
+                </Pressable>
+              </View>
+            </Pressable>
+          );
+        })}
       </ScrollView>
     </View>
-  )
-}
+  );
+};
 
 export default FeaturedProductSection;
 
-const style = StyleSheet.create({
-    fp: {
-        width: "100%",
-        gap: 15
-    },
-    fp_heading: {
-        flexDirection: "row",
-        width: "100%",
-        justifyContent: "space-between"
-    },
-    pd_list: {
-               
-        flexDirection: "row", 
-        gap: 20,
-        
-    },
-    pd: {
-        padding: 20,
-        borderWidth: 1,
-        width: 161,
-        alignItems: "center",
-        borderRadius: 20,
-        borderColor: "#4241412c",
-        position: "relative",
-        gap: 10,
-        
-    }
-})
+const styles = StyleSheet.create({
+  container: { width: "100%", gap: 14 },
+
+  // Header
+  header: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
+  titleRow: { flexDirection: "row", alignItems: "center", gap: 8 },
+  titleAccent: { width: 4, height: 20, borderRadius: 2 },
+  title: { fontWeight: "800", letterSpacing: -0.3 },
+  viewAll: { fontSize: 13, fontWeight: "700" },
+
+  // Horizontal list
+  list: { gap: 12, paddingBottom: 4 },
+
+  // Card
+  card: {
+    width: 175,
+    borderRadius: 16,
+    borderWidth: 1,
+    overflow: "hidden",
+    shadowColor: "#008100",
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 3 },
+    elevation: 3,
+  },
+
+  // Image
+  imgWrapper: { position: "relative" },
+  img: { width: "100%", height: 165, borderTopLeftRadius: 16, borderTopRightRadius: 16 },
+
+  rankBadge: {
+    position: "absolute",
+    top: 8,
+    left: 8,
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  rankText: { fontSize: 14 },
+
+  conditionPill: {
+    position: "absolute",
+    bottom: 8,
+    left: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 20,
+  },
+  conditionText: { color: "#fff", fontSize: 9, fontWeight: "800", letterSpacing: 0.5 },
+
+  wishlistBtn: {
+    position: "absolute",
+    top: 8,
+    right: 8,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: "#000",
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+
+  // Body
+  cardBody: { padding: 11, gap: 5 },
+  cardName: { fontSize: 13, fontWeight: "700" },
+
+  locationRow: { flexDirection: "row", alignItems: "center", gap: 2 },
+  locationPin: { fontSize: 10 },
+  locationText: { fontSize: 10, flex: 1 },
+
+  priceRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
+  price: { fontSize: 14, fontWeight: "800" },
+  ratingPill: { flexDirection: "row", alignItems: "center", gap: 2 },
+  star: { color: "#EAB308", fontSize: 11 },
+  ratingText: { fontSize: 11, fontWeight: "600" },
+
+  views: { fontSize: 10 },
+
+  buyBtn: {
+    backgroundColor: PRIMARY,
+    borderRadius: 9,
+    paddingVertical: 8,
+    alignItems: "center",
+    marginTop: 2,
+  },
+  buyBtnText: { color: "#fff", fontSize: 12, fontWeight: "700", letterSpacing: 0.3 },
+});

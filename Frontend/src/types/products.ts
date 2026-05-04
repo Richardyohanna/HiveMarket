@@ -16,6 +16,9 @@ export interface CreateProductPayload {
   category: string;
   location: string;
   images: string[];
+  sellerName: string;
+  sellerImage: string;
+  sellerEmail: string;
 }
 
 export interface ProductResponse {
@@ -34,6 +37,10 @@ export interface ProductResponse {
   status: "PENDING" | "READY" | "FAILED";
   imageUrls: string[];
   createdAt: string;
+
+  views: number;
+  purchases: number;
+  rating: number;
 }
 
 export interface CreateProductResult {
@@ -44,18 +51,28 @@ export interface CreateProductResult {
 export interface RecentListingItem {
   id: string;
   pImage: string;
+  imageUrls: string[];
   pName: string;
   pDetail: string;
   pAmount: string;
+  pDiscount?: string;
   pTimePosted: string;
   pQuality: string;
   location?: string;
-  pDiscount?: string;
   sellerEmail?: string | null;
   sellerName?: string | null;
   sellerProfilePicture?: string | null;
-  status?: "PENDING" | "READY" | "FAILED";
+  status: "PENDING" | "READY" | "FAILED";
+
+ 
+  createdAt: string;
+
+  views: number;
+  purchases: number;
+  rating: number;
 }
+
+
 
 export interface ProductStore {
   productName: string;
@@ -65,6 +82,9 @@ export interface ProductStore {
   condition: ProductCondition;
   location: string;
   images: string[];
+  sellerEmail: string;
+  sellerName: string;
+  sellerImage: string;
 
   recentListings: RecentListingItem[];
   loading: boolean;
@@ -77,6 +97,9 @@ export interface ProductStore {
   setCategory: (value: string) => void;
   setCondition: (value: ProductCondition) => void;
   setLocation: (value: string) => void;
+  setSellerEmail: (value: string) => void;
+  setSellerName: (value: string) => void;
+  setSellerImage: (value: string) => void
 
   addImages: (newImages: string[]) => void;
   removeImage: (index: number) => void;

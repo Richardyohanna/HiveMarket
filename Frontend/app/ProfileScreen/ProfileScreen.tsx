@@ -31,7 +31,7 @@ const theme = scheme === "dark" ? Colors.dark : Colors.light;
                 }}
             >
 
-            <Pressable onPress={onBack} style={{ width: 20 }}>
+            <Pressable onPress={onBack} style={{ width: 40 }}>
                 <Image
                     source={require("../../assets/images/ProductDetail/back.png")}
                     style={{ tintColor: theme.text }}
@@ -52,7 +52,7 @@ const theme = scheme === "dark" ? Colors.dark : Colors.light;
             Profile
             </Text>
 
-            <Pressable style={{width: 20, alignSelf: "center", alignItems: "center"}}>
+            <Pressable style={{width: 40, alignSelf: "center", alignItems: "center"}}>
                 <Image
                     source={require("../../assets/images/Profile/share.png")}
                     style={{ tintColor: theme.text }}

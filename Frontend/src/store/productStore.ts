@@ -34,10 +34,17 @@ const initialState = {
   condition: "NEW" as ProductCondition,
   location: "",
   images: [],
+  sellerName: "",
+  sellerEmail: "",
+  sellerImage: "",
   recentListings: [] as RecentListingItem[],
   loading: false,
   error: null as string | null,
   successMessage: null as string | null,
+
+  views:  0,
+  purchases:  0,
+  rating: 0,
 };
 
 export const useProductStore = create<ProductStore>((set, get) => ({
@@ -49,6 +56,9 @@ export const useProductStore = create<ProductStore>((set, get) => ({
   setCategory: (value: string) => set({ category: value }),
   setCondition: (value: ProductCondition) => set({ condition: value }),
   setLocation: (value: string) => set({ location: value }),
+  setSellerName: (value: string) => set({ sellerName: value }),
+  setSellerEmail: (value: string) => set({ sellerEmail: value }),
+  setSellerImage: (value: string) => set({ sellerImage: value }),
 
   addImages: (newImages: string[]) =>
     set((state) => ({
@@ -99,6 +109,7 @@ export const useProductStore = create<ProductStore>((set, get) => ({
       const mappedProducts: RecentListingItem[] = products.map((item) => ({
         id: String(item.id),
         pImage: item.imageUrls?.[0] || "",
+        imageUrls: item.imageUrls || [],
         pName: item.pName,
         pDetail: item.pDetail,
         pAmount: String(item.pAmount),
@@ -110,6 +121,13 @@ export const useProductStore = create<ProductStore>((set, get) => ({
         sellerName: item.sellerName,
         sellerProfilePicture: item.sellerProfilePicture,
         status: item.status,
+
+        // ✅ ADD THIS
+        createdAt: item.createdAt,
+
+        views: item.views || 0,
+        purchases: item.purchases || 0,
+        rating: item.rating || 0,
       }));
 
       set({
@@ -134,6 +152,9 @@ export const useProductStore = create<ProductStore>((set, get) => ({
       condition,
       location,
       images,
+      sellerEmail,
+      sellerImage,
+      sellerName
     } = get();
 
     if (!productName.trim()) {
@@ -189,11 +210,15 @@ export const useProductStore = create<ProductStore>((set, get) => ({
         pQuantity: 1,
         category,
         location,
+        sellerEmail,
+        sellerImage,
+        sellerName,
       });
 
       const optimisticItem: RecentListingItem = {
         id: String(createdProduct.id),
         pImage: currentImages[0] || "",
+        imageUrls: currentImages || [],
         pName: createdProduct.pName,
         pDetail: createdProduct.pDetail,
         pAmount: String(createdProduct.pAmount),
@@ -205,8 +230,15 @@ export const useProductStore = create<ProductStore>((set, get) => ({
         sellerName: createdProduct.sellerName,
         sellerProfilePicture: createdProduct.sellerProfilePicture,
         status: "PENDING",
-      };
 
+        // ✅ ADD THIS
+        createdAt: createdProduct.createdAt || new Date().toISOString(),
+
+        views: createdProduct.views || 0,
+        purchases: createdProduct.purchases || 0,
+        rating: createdProduct.rating || 0,
+      };
+      
       set((state) => ({
         recentListings: [optimisticItem, ...state.recentListings],
         productName: "",
@@ -219,6 +251,8 @@ export const useProductStore = create<ProductStore>((set, get) => ({
         loading: false,
         error: null,
         successMessage: "Post created. Images are uploading...",
+
+
       }));
 
       uploadProductImagesApi(createdProduct.id, currentImages)
