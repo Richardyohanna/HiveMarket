@@ -57,6 +57,8 @@ export interface RecentListingItem {
   pAmount: string;
   pDiscount?: string;
   pTimePosted: string;
+  category: string;
+  pStatus?: "SOLD" | "AVAILABLE";
   pQuality: string;
   location?: string;
   sellerEmail?: string | null;

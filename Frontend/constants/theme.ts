@@ -3,7 +3,7 @@
  * There are many other ways to style your app. For example, [Nativewind](https://www.nativewind.dev/), [Tamagui](https://tamagui.dev/), [unistyles](https://reactnativeunistyles.vercel.app), etc.
  */
 
-import { Platform } from 'react-native';
+import { Platform, StyleSheet } from 'react-native';
 
 type ThemeType = {
   background: string;
@@ -27,6 +27,67 @@ type ThemeFontSize = {
   xxxlg: number;
   
 }
+
+export const PRIMARY      = "#008100";
+export const PRIMARY_SOFT = "#e8f5e9";
+export const PRIMARY_DARK = "#1a3a1a";
+export const PRODUCTS_PER_BLOCK   = 12;
+export const RECENT_PREVIEW_COUNT = 4;
+export const BLOCKS_BEFORE_REFETCH = 3;
+export const FETCH_COOLDOWN_MS     = 30_000;
+
+export const CARD_W = "48%";
+
+export const generalStyle = StyleSheet.create({
+  container:       { width: "100%", gap: 14 },
+  feedContainer:   { gap: 20 },
+  sectionHeader:   { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
+  sectionTitleRow: { flexDirection: "row", alignItems: "center", gap: 8 },
+  titleAccent:     { width: 4, height: 20, borderRadius: 2 },
+  sectionTitle:    { fontWeight: "800", letterSpacing: -0.3 },
+  sectionCount:    { fontSize: 13, fontWeight: "600" },
+
+  gridBlock: { gap: 10 },
+  gridRow:   { flexDirection: "row", gap: 10, justifyContent: "space-between" },
+
+  card: {
+    flex: 1, maxWidth: "49%", borderRadius: 14, borderWidth: 1, overflow: "hidden",
+    shadowColor: PRIMARY, shadowOpacity: 0.07, shadowRadius: 8,
+    shadowOffset: { width: 0, height: 3 }, elevation: 3,
+  },
+  cardImgWrapper: { position: "relative" },
+  cardImg:        { width: "100%", height: 155 },
+  conditionPill:  { position: "absolute", bottom: 7, left: 7, paddingHorizontal: 7, paddingVertical: 2, borderRadius: 20 },
+  conditionText:  { color: "#fff", fontSize: 9, fontWeight: "800", letterSpacing: 0.6 },
+  wishlistBtn:    { position: "absolute", top: 7, right: 7, width: 30, height: 30, borderRadius: 15, alignItems: "center", justifyContent: "center" },
+  cardBody:       { padding: 9, gap: 4 },
+  cardName:       { fontSize: 12, fontWeight: "600", lineHeight: 17 },
+  locationRow:    { flexDirection: "row", alignItems: "center", gap: 2 },
+  locationPin:    { fontSize: 10 },
+  locationText:   { fontSize: 10, flex: 1 },
+  cardPrice:      { fontSize: 14, fontWeight: "800" },
+  metaRow:        { flexDirection: "row", alignItems: "center", gap: 3 },
+  star:           { color: "#EAB308", fontSize: 11 },
+  ratingVal:      { fontSize: 11, fontWeight: "600" },
+  viewCount:      { fontSize: 10 },
+  buyBtn:         { backgroundColor: PRIMARY, borderRadius: 8, paddingVertical: 8, alignItems: "center", marginTop: 2 },
+  buyBtnText:     { color: "#fff", fontSize: 11, fontWeight: "700", letterSpacing: 0.3 },
+  cardPlaceholder:{ flex: 1, maxWidth: "49%" },
+
+  stripOuter:     { padding: 14, gap: 10, borderRadius: 14 },
+  stripHeader:    { flexDirection: "row", alignItems: "center", gap: 8 },
+  stripAccent:    { width: 4, height: 17, borderRadius: 2, backgroundColor: PRIMARY },
+  stripTitle:     { fontSize: 14, fontWeight: "700" },
+  stripList:      { gap: 10, paddingBottom: 2 },
+  stripCard:      { width: 130, borderRadius: 12, borderWidth: 1, overflow: "hidden" },
+  stripImg:       { width: "100%", height: 95 },
+  stripCardInfo:  { padding: 7, gap: 3 },
+  stripCardName:  { fontSize: 11, fontWeight: "600" },
+  stripCardPrice: { fontSize: 12, fontWeight: "800" },
+
+  loaderBlock: { alignItems: "center", paddingVertical: 24, gap: 8 },
+  loaderText:  { fontSize: 13, fontWeight: "500" },
+});
 
 export const FontSize = {
   size: {

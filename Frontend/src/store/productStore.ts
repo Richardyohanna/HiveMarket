@@ -120,6 +120,7 @@ export const useProductStore = create<ProductStore>((set, get) => ({
         sellerEmail: item.sellerEmail,
         sellerName: item.sellerName,
         sellerProfilePicture: item.sellerProfilePicture,
+        category: item.category,
         status: item.status,
 
         // ✅ ADD THIS
@@ -228,6 +229,7 @@ export const useProductStore = create<ProductStore>((set, get) => ({
         pQuality: createdProduct.pCondition,
         sellerEmail: createdProduct.sellerEmail,
         sellerName: createdProduct.sellerName,
+        category: createdProduct.category,
         sellerProfilePicture: createdProduct.sellerProfilePicture,
         status: "PENDING",
 

@@ -33,5 +33,5 @@ export type UserStoreData = {
     setLocation: (value: string) => void;
     setCampus: (value: string) => void;
 
-
+    clearUser: () => void;
 }

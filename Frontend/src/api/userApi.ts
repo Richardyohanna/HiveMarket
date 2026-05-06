@@ -1,8 +1,9 @@
 
+import { localURL } from "@/localURL";
 import { getToken } from "../services/authStorage";
 import { UserStoreData } from "../types/User";
 
-const BASE_URL = "http://172.20.10.8:8080/api";
+const BASE_URL = `${localURL}/api`;
 
 
 export interface RegisterRequestComplete {

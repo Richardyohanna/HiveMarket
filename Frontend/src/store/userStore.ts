@@ -23,5 +23,5 @@ export const userStore = create<UserStoreData>((set, get) => ({
     setLocation: (value: string) => set({location: value}),
     setCampus: (value: string) => set({campus: value}),
 
-    
+     clearUser: () => set({ ...initialState }),
 }))

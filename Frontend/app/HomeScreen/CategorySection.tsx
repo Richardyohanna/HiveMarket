@@ -13,8 +13,8 @@ import {
   View
 } from "react-native";
 
-import { BLOCKS_BEFORE_REFETCH, buildBlock, FeedBlock, FETCH_COOLDOWN_MS, GridBlockView, PRIMARY, PRODUCTS_PER_BLOCK, RecentStrip, shuffle } from "../../components/ui/productLayout";
-
+import { buildBlock, FeedBlock, GridBlockView,  RecentStrip, shuffle } from "../../components/ui/productLayout";
+import { BLOCKS_BEFORE_REFETCH , FETCH_COOLDOWN_MS, PRIMARY, PRODUCTS_PER_BLOCK, } from "@/constants/theme";
 
 
 // ─── Main Component ───────────────────────────────────────────────────────────
@@ -192,7 +192,7 @@ const CategorySection = () => {
 
 export default CategorySection;
 
-// ─── Styles ───────────────────────────────────────────────────────────────────
+// ─── Styles ──────────────r─────────────────────────────────────────────────────
 const styles = StyleSheet.create({
   container:       { width: "100%", gap: 14 },
   feedContainer:   { gap: 20 },
