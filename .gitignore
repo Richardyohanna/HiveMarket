@@ -38,7 +38,7 @@ Frontend/.env*.local
 # typescript
 Frontend/*.tsbuildinfo
 
-
+Backend/backend/.env
 
 app-example
 
