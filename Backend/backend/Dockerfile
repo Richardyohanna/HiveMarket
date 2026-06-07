@@ -2,7 +2,8 @@ FROM maven:3.9.6-eclipse-temurin-21 AS build
 
 WORKDIR /app
 
-COPY . .
+COPY backend/pom.xml backend/
+COPY backend/src backend/src
 
 WORKDIR /app/backend
 
