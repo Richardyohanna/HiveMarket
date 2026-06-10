@@ -4,10 +4,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+import org.hibernate.annotations.BatchSize;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.hivemarket.cart.Entity.Cart;
 import com.hivemarket.product.Entity.Product;
 import com.hivemarket.product.comment.entity.Comment;
 import com.hivemarket.product.comment.entity.CommentLikes;
+import com.hivemarket.product.rating.entity.Rating;
 import com.hivemarket.reaction.entity.Reaction;
 
 import jakarta.persistence.*;
@@ -65,6 +69,17 @@ public class User {
     @JsonIgnore
     private List<Comment> comments = new ArrayList<>();
     
+
+    @OneToMany(
+    		mappedBy = "user",
+    		cascade = CascadeType.ALL,
+    		orphanRemoval = true    		
+    		)
+    @Builder.Default
+    @BatchSize(size = 30)
+    @ToString.Exclude
+    @JsonIgnore
+    private List<Cart> cart = new ArrayList<>();
     
     @OneToMany(
 	    mappedBy = "user",
@@ -88,6 +103,13 @@ public class User {
     @JsonIgnore
     @Builder.Default
     private List<CommentLikes> commentLikeByMe = new ArrayList<>();
+    
+    
+    @OneToMany(mappedBy = "user")
+    @ToString.Exclude
+    @JsonIgnore
+    @Builder.Default
+    private List<Rating> rating = new ArrayList<>();
     
     private boolean enabled;
     

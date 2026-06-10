@@ -1,8 +1,8 @@
 
 export type CartRequest = {
-    user_email: string;
+    user_id: string;
     product_id: string;
-    seller_email: string;
+    seller_id: string;
 }
 
 // src/types/Cart.ts
@@ -11,9 +11,9 @@ export type CartRequest = {
 
 // matches your Spring Boot CartResponse DTO body
 export interface CartResponse {
-  user_email: string;
+  user_id: string;
   product_id: string;
-  seller_email: string;
+  seller_id: string;
 }
 
 export interface CartStoreType {
@@ -22,9 +22,9 @@ export interface CartStoreType {
   error:        string | null;
 
   // actions
-  fetchCart:       (email: string) => Promise<void>;
-  addToCart:       (email: string, productId: string, sellerEmail: string) => Promise<void>;
-  removeFromCart:  (email: string, productId: string, sellerEmail: string) => Promise<void>;
+  fetchCart:       (userId: string) => Promise<void>;
+  addToCart:       (userId: string, productId: string, sellerId: string) => Promise<void>;
+  removeFromCart:  (userId: string, productId: string, sellerId: string) => Promise<void>;
   clearLocalCart:  () => void;
   isInCart:        (productId: string | number) => boolean;
 

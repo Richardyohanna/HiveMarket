@@ -1,6 +1,6 @@
 import { Colors, FontSize } from "@/constants/theme";
 import { increaseProductViewApi } from "@/src/api/productApi";
-import { useProductStore } from "@/src/store/productStore";
+import { RecentListingItem } from "@/src/types/products";
 import { router } from "expo-router";
 import React, { useMemo } from "react";
 import {
@@ -12,7 +12,6 @@ import {
   useColorScheme,
   View,
 } from "react-native";
-import { RecentListingItem } from "@/src/types/products";
 
 const PRIMARY      = "#008100";
 const PRIMARY_SOFT = "#e8f5e9";   // light tint
@@ -40,7 +39,7 @@ const FeaturedProductSection = ( { products,
         score:
           0.5 * (p.views     || 0) +
           2.0 * (p.purchases || 0) +
-          0.2 * (p.rating    || 0),
+          0.2 * (p.ratingData.AverageRating    || 0),
       }))
       .sort((a, b) => b.score - a.score)
       .slice(0, 10);
@@ -93,9 +92,9 @@ const FeaturedProductSection = ( { products,
               <View style={styles.imgWrapper}>
                 <Image
                   source={
-                    //item.pImage ?
+                    item.pImage ?
                        { uri: item.pImage }
-                      //: require("../../assets/images/HomeScreen/nike.png")
+                      : require("../../assets/images/ProductDetail/Hero Image.png")
                   }
                   style={styles.img}
                   resizeMode="cover"
@@ -133,7 +132,7 @@ const FeaturedProductSection = ( { products,
                 {/* Location */}
                 {item.location ? (
                   <View style={styles.locationRow}>
-                    <Text style={[styles.locationPin, { color: PRIMARY }]}>📍</Text>
+                    <Text style={[styles.locationPin, { color: PRIMARY }]}>⌯✈︎</Text>
                     <Text
                       numberOfLines={1}
                       style={[styles.locationText, { color: theme.readColor }]}
@@ -151,7 +150,7 @@ const FeaturedProductSection = ( { products,
                   <View style={styles.ratingPill}>
                     <Text style={styles.star}>★</Text>
                     <Text style={[styles.ratingText, { color: theme.readColor }]}>
-                      {Number(item.rating || 0).toFixed(1)}
+                      {Number(item.ratingData.AverageRating || 0).toFixed(1)}
                     </Text>
                   </View>
                 </View>

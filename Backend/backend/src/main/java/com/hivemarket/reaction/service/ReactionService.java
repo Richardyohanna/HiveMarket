@@ -185,7 +185,7 @@ public class ReactionService {
 	    return new ReactionResponse(
 	            productId,
 	            userId,
-	            reaction.get().getIsReacted(),
+	            false,
 	            product.getReactions()
 	    );
 	}

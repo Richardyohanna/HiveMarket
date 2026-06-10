@@ -5,6 +5,8 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
+import com.hivemarket.product.rating.dto.RatingResponse;
+
 public record ProductResponse(
     UUID id,
     String pName,
@@ -26,6 +28,6 @@ public record ProductResponse(
     Integer reactions,
     Integer views,
     Integer purchases,
-    Integer rating,
+    RatingResponse ratingData,
     Boolean isReacted
 ) {}

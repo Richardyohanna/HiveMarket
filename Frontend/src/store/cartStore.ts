@@ -1,5 +1,5 @@
 // src/store/cartStore.ts
-
+/*
 import { create } from "zustand";
 import {
   addCartApi,
@@ -43,6 +43,7 @@ export const useCartStore = create<CartStore>((set, get) => ({
       const products = await getAllCartProductsApi(email);
 
       console.log("This is the cart products data received from backend:", products, "for email:", email);
+      
       const mapped: RecentListingItem[] = products.map((p) => ({
         id:                   p.id,
         pImage:               p.imageUrls?.[0] || "",
@@ -112,4 +113,4 @@ export const useCartStore = create<CartStore>((set, get) => ({
   // ── Check if a product is already in the cart ────────────────────────────
   isInCart: (productId) =>
     get().cartItems.some((item) => String(item.id) === String(productId)),
-}));
+}));  */

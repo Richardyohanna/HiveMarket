@@ -15,7 +15,7 @@ import com.hivemarket.product.Entity.Image;
 import com.hivemarket.product.Entity.Product;
 import com.hivemarket.product.Repository.ImageRepository;
 import com.hivemarket.product.Repository.ProductRepository;
-import com.hivemarket.reaction.dto.ReactionResponse;
+import com.hivemarket.product.rating.service.RatingService;
 import com.hivemarket.reaction.entity.Reaction;
 import com.hivemarket.reaction.repository.ReactionRepository;
 import com.hivemarket.reaction.service.ReactionService;
@@ -35,6 +35,7 @@ public class ProductService {
     private final UserRepository userRepository;
     private final ReactionService reactionService;
     private final ReactionRepository reactionRepo;
+    private final RatingService ratingService;
 
     private ProductResponse mapResponse(Product product) {
         List<String> imageUrls = product.getImages() == null
@@ -62,7 +63,38 @@ public class ProductService {
                 product.getReactions(),
                 product.getViews(),
                 product.getPurchases(),
-                product.getRating(),
+                ratingService.getProductRating(product.getId()),
+               	false
+        );
+    }
+    
+    private ProductResponse mapResponse(Product product,UUID userId) {
+        List<String> imageUrls = product.getImages() == null
+                ? new ArrayList<>()
+                : product.getImages().stream().map(Image::getImageUrl).toList();
+
+        return new ProductResponse(
+                product.getId(),
+                product.getPName(),
+                product.getPDetail(),
+                product.getPAmount(),
+                product.getPDiscount(),
+                product.getPCondition(),
+                product.getPQuantity(),
+                product.getCategory(),
+                product.getLocation(),
+                product.getSeller() != null ? product.getSeller().getEmail() : null,
+                product.getSeller() != null ? product.getSeller().getFull_name() : null,
+                product.getSeller() != null ? product.getSeller().getId(): null,
+                product.getSeller() != null ? product.getSeller().getProfile_picture() : null,
+                product.getSeller() != null ? product.getSeller().getLocation() : null,
+                product.getStatus(),
+                imageUrls,
+                product.getCreatedAt(),
+                product.getReactions(),
+                product.getViews(),
+                product.getPurchases(),
+                ratingService.getProductRating(product.getId(), userId),
                	false
         );
     }
@@ -93,11 +125,44 @@ public class ProductService {
                 product.getReactions(),
                 product.getViews(),
                 product.getPurchases(),
-                product.getRating(),
+                ratingService.getProductRating(product.getId()),
                	reaction.getIsReacted()
         );
     }
 
+    
+    private ProductResponse mapResponse(Product product, Reaction reaction , UUID userId) {
+        List<String> imageUrls = product.getImages() == null
+                ? new ArrayList<>()
+                : product.getImages().stream().map(Image::getImageUrl).toList();
+
+        return new ProductResponse(
+                product.getId(),
+                product.getPName(),
+                product.getPDetail(),
+                product.getPAmount(),
+                product.getPDiscount(),
+                product.getPCondition(),
+                product.getPQuantity(),
+                product.getCategory(),
+                product.getLocation(),
+                product.getSeller() != null ? product.getSeller().getEmail() : null,
+                product.getSeller() != null ? product.getSeller().getFull_name() : null,
+                product.getSeller() != null ? product.getSeller().getId(): null,
+                product.getSeller() != null ? product.getSeller().getProfile_picture() : null,
+                product.getSeller() != null ? product.getSeller().getLocation() : null,
+                product.getStatus(),
+                imageUrls,
+                product.getCreatedAt(),
+                product.getReactions(),
+                product.getViews(),
+                product.getPurchases(),
+                ratingService.getProductRating(product.getId(), userId),
+               	reaction.getIsReacted()
+        );
+    }
+    
+    
     @Transactional
     public ProductResponse createProductOnly(CreateProduct request, String email) {
         User seller = userRepository.findByEmail(email)
@@ -175,7 +240,26 @@ public class ProductService {
 
         User user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("Cannot find this user"));
         
-        return mapResponse(product, reactionService.save(product, user));
+        Optional<Reaction> reaction = reactionRepo.findByProduct_IdAndUser_Id(id, userId);
+        
+        System.out.println("This is the userId and ProductId while trying to get the product by ID" + id + "userId " + userId);
+       
+        
+        if(reaction.isEmpty()) {
+        	
+        	Reaction newReaction = Reaction.builder()
+        			.product(product)
+        			.user(user)
+        			.isReacted(false)
+        			.build();
+        	
+        	
+        	return mapResponse(product, newReaction, userId);
+        	
+        } 
+        
+        
+        return mapResponse(product, reactionService.save(product, user),userId);
     }
 
     @Transactional(readOnly = true)
@@ -213,7 +297,7 @@ public class ProductService {
                     product.getReactions(),
                     product.getViews(),
                     product.getPurchases(),
-                    product.getRating(),
+                    ratingService.getProductRating(product.getId()),
                    	false
             );
     		
@@ -237,7 +321,7 @@ public class ProductService {
     		
     		System.out.println("This is the reaction of this product when getting all product with userId " + reaction.toString());
     	
-    		ProductResponse logicResponse = reaction.isEmpty() ? mapResponse(product) : mapResponse(product, reaction.get()); 
+    		ProductResponse logicResponse = reaction.isEmpty() ? mapResponse(product, userId) : mapResponse(product, reaction.get(), userId); 
     		 
     		
     		productResult.add(logicResponse);
@@ -317,6 +401,7 @@ public class ProductService {
         	product.setViews(0);
         	
         }
+        
         product.setViews(product.getViews() + 1);
 
         productRepository.save(product);
@@ -330,52 +415,6 @@ public class ProductService {
 
         productRepository.save(product);
     }
-    
-   
-    /*@Transactional
-    public ReactionResponse  increaseReaction(ReactionRequest request) {
-    	
-    	System.out.println("This is the server reaction reaquest " + request);
-    	
-    	int number;
-    	
-    	if(request.isReacted()) {
-    		
-    		number = 1;
-    		
-    	} else {
-    		
-    		number = -1;
-    		
-    	}
-    	
-    	
-    	
-    	Product product = productRepository.findById(request.productId()).orElseThrow(()-> new RuntimeException("Error finding the product forincreasing the reaction from  " + request.toString()));
-    	
-    	int defaultReaction = product.getReactions();
-    	
-    	if(product.getReactions() == null ) {
-    		
-    		defaultReaction = 0;
-    		
-    	}
-    	product.setReactions(defaultReaction + number);
-    	
-    	System.out.println("THis is the number " + (product.getReactions() + number));
-    	
-    	Product savedProduct = productRepository.save(product);
-    	
-    	return new ReactionResponse(
-    			
-    			request.productId(),
-    			request.userId(),
-    			request.isReacted(),
-    			savedProduct.getReactions()
-    			
-    			);
-    	
-    } */
     
     @Transactional
     public String testDelete(UUID id) {

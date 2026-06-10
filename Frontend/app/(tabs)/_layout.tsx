@@ -15,7 +15,8 @@
  * the real filenames are "CartScreen", "ChatScreen", "ProfileScreen" etc.
  */
 
-import { useCartStore } from "@/src/store/cartStore";
+
+import { useCartProduct } from "@/src/hooks/useCartProduct";
 import { userStore } from "@/src/store/userStore";
 import { router, Tabs } from "expo-router";
 import React, { useEffect, useState } from "react";
@@ -138,7 +139,17 @@ export default function TabsLayout() {
   const role     = userStore.getState().role ?? "";
   const isSeller = role.toLowerCase() === "seller";
 
-  const cartCount = useCartStore((s) => s.savedIds?.length ?? 0);
+    const {
+      products: cartItems,
+      loading,
+      error,
+      fetchCartProduct: fetchCart,
+      addToCart,
+      removeFromCart,
+      isInCart,
+      totalValue: cartCount,
+    } = useCartProduct(userStore.getState().id); 
+ 
 
   const tabBarStyle = {
     height:               Platform.OS === "ios" ? 86 : 66,

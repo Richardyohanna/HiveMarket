@@ -2,7 +2,6 @@ import { Colors, FontSize } from '@/constants/theme';
 import { chatSocketService } from '@/src/api/chatSocket';
 import { getUserData } from '@/src/api/userApi';
 import { loginUser } from "@/src/services/authApi";
-import { useProductStore } from '@/src/store/productStore';
 import { userStore } from '@/src/store/userStore';
 import { router } from 'expo-router';
 import React, { useRef, useState } from 'react';
@@ -146,6 +145,23 @@ const ForgotPasswordModal = ({
 
 // ─── Login Screen ─────────────────────────────────────────────────────────────
 const LoginScreen = () => {
+
+   /*
+  const user = userStore.getState();
+
+  const email = user.email;
+  const setEmail = user.setEmail;
+  const setFullName = user.setFullName;
+  const setProfilePicture = user.setProfilePicture;
+  const setCampus = user.setCampus;
+  const setLocation = user.setLocation;
+  const setUniversity = user.setUniversity;
+  const setGender = user.setGender;
+  const setRole = user.setRole;
+  const setUserId = user.setUserId;
+
+   */
+ 
   const {
     email,
     setEmail,
@@ -159,8 +175,7 @@ const LoginScreen = () => {
     setUserId,
   } = userStore();
 
-   const loadRecentListings = useProductStore((s) => s.loadRecentListings);
-
+  
   const scheme  = useColorScheme();
   const isDark  = scheme === "dark";
   const themeSize = FontSize.size;
@@ -194,9 +209,12 @@ const LoginScreen = () => {
             setUniversity(data.university);
             setLocation(data.location);
             setGender(data.gender);
+
             if (data.role) setRole(data.role);
 
-            
+            //THis will exit the connections if the user data.id is null
+            if(data.id == null ) return;
+
             await chatSocketService.connect(data.id).then(() => {
               console.log("[Login] WebSocket connection established for user:", data.id);
             });

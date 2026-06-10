@@ -1,9 +1,12 @@
 import { Colors, FontSize, generalStyle } from "@/constants/theme";
 import ScrollWithRefresh from "@/hooks/ScrollWithRefresh";
+import { addCartApi } from "@/src/api/cartAPi";
 import { addReactionApi, deleteProductByIdApi, increaseProductViewApi } from "@/src/api/productApi";
+import { rate } from "@/src/api/ratingApi";
 import { useProductDetail } from "@/src/hooks/useProductDetail";
+import { formatTimeAgo } from "@/src/store/productStore";
 import { userStore } from "@/src/store/userStore";
-import { CommentResponse, ReactionResponse } from "@/src/types/products";
+import { CommentResponse, RatingRequest, ReactionResponse } from "@/src/types/products";
 import { router, useLocalSearchParams } from "expo-router";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -78,7 +81,7 @@ const Stars = ({
 }: {
   rating: number; size?: number; interactive?: boolean; onRate?: (n: number) => void;
 }) => (
-  <View style={{ flexDirection: "row", gap: 2 }}>
+  <View style={{ flexDirection: "row", gap: 2 }} >
     {[1, 2, 3, 4, 5].map((n) => (
       <Pressable key={n} onPress={() => interactive && onRate?.(n)} disabled={!interactive}>
         <Text style={{ fontSize: size, color: n <= rating ? AMBER : "rgba(200,200,200,0.5)" }}>
@@ -130,7 +133,7 @@ const CommentCard = React.memo(({
           <Text style={[cc.author, { color: theme.text }]}>{comment.aurthor}</Text>
           <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
             <Stars rating={comment.rating} size={12} />
-            <Text style={[cc.date, { color: theme.readColor }]}>{comment.createdAt}</Text>
+            <Text style={[cc.date, { color: theme.readColor }]}>{formatTimeAgo(comment.createdAt)}</Text>
           </View>
         </View>
         {!comment.reported && (
@@ -221,7 +224,7 @@ const IconBtn = ({
             : isDark ? "#1a2a1a" : "#f1f5f1",
       }]}
     >
-      <Animated.Text style={[ib.emoji, { transform: [{ scale }]}]}>{emoji}</Animated.Text>
+      <Animated.Text style={[ib.emoji, { transform: [{ scale }], color: isDark ? PRIMARY_SOFT : PRIMARY}]}>{emoji}</Animated.Text>
       <Text style={[ib.label, {
         color: danger ? DANGER : active ? activeColor : isDark ? "#6a8a6a" : "#7a9a7a",
       }]}>
@@ -243,6 +246,9 @@ const RelatedCard = React.memo(({
 }: {
   item: any; isDark: boolean; theme: typeof Colors.light; onPress: () => void;
 }) => (
+
+
+
   <Pressable
     onPress={onPress}
     style={[styles.relatedCard, {
@@ -251,7 +257,7 @@ const RelatedCard = React.memo(({
     }]}
   >
     <Image
-      source={item.pImage ? { uri: item.pImage } : require("../../assets/images/HomeScreen/nike.png")}
+      source={item.imageUrls[0] ? { uri: item.imageUrls[0] } : require("../../assets/images/HomeScreen/nike.png")}
       style={styles.relatedImg}
       resizeMode="cover"
     />
@@ -292,7 +298,7 @@ const ProductDetail = () => {
   const fs     = FontSize.size;
 
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { email: currentUserEmail , id: currentUserId } = userStore();
+  const { email: currentUserEmail , id: currentUserId, full_name } = userStore();
 
   const {
     product,
@@ -319,6 +325,7 @@ const ProductDetail = () => {
   const scrollRef      = useRef<ScrollView>(null);
   const modalScrollRef = useRef<ScrollView>(null);
 
+  console.log("This is the Rating ", draftRating);
   useEffect(() => {
     if (recentListings.length === 0) loadRecentListings(currentUserId || "");
   }, []);
@@ -330,20 +337,33 @@ const ProductDetail = () => {
 
     getComments(product?.id , currentUserId).then((data) => {
 
+      console.log("This is the comment ", data);
 
     setComments(data);
     }).catch((err) => {
       console.error("Failed to fetch comments:", err);
     });
 
-  }, [])
+  }, [product?.id , currentUserId])
   
   useEffect(() => {
+
+    console.log("Product reactions updated. Server reaction:", product?.isReacted,  "THis is the reaction by default " , reacted);
+    setReacted(product?.isReacted || false);
     setReactionCount(product?.reactions || 0);
   }, [product?.reactions]);
 
 
-  
+  useEffect(() => {
+
+    console.log("This is the product.ratingData ", product?.ratingData);
+
+    if(product?.ratingData.userRating != null)
+    setDraftRating(product?.ratingData.userRating);
+
+  }, [product?.ratingData.userRating]);
+
+
   useEffect(() => {
   
     if(!chatSocketService.isConnected()) return;
@@ -385,6 +405,26 @@ const ProductDetail = () => {
     .sort((a, b) => b.score - a.score)
     .slice(0, 10);
 }, [recentListings, product]);
+
+
+  const Rate = useCallback((rating: number)=> {
+
+    if(product?.id == null) return;
+    
+    if(currentUserId == null || currentUserId == "") {
+        Alert.alert("Login Required","Please login to be able to rate this product.", [{text: "Login", onPress: () => router.push("/Login/LoginScreen")}, {text: "Cancel", style: "cancel"}]);
+        return;
+      }
+
+      const rateRequest: RatingRequest = {
+        userId: currentUserId,
+        productId: product?.id,
+        rating: rating
+      }
+
+      rate(rateRequest);
+
+  }, [product?.id, currentUserId, rate, router])
 
 
   const handleReaction = () => {
@@ -509,10 +549,13 @@ const ProductDetail = () => {
           onPress: () => {
             // TODO: call your delete API here
             Alert.alert("Deleted", "Your listing has been removed.");
-            deleteProductByIdApi(product?.id ?? "").catch((err) => {
+
+            console.log("Attempting to delete product with ID:", id);
+            
+            deleteProductByIdApi(id).catch((err) => {
               console.error("Failed to delete product:", err);
             });
-            router.back();
+            router.push("/(tabs)/HomeScreen");
           },
         },
       ]
@@ -520,9 +563,28 @@ const ProductDetail = () => {
   }, []);
 
   const onCart = useCallback(() => {
-    setInCart((p) => !p);
+    
     // TODO: wire to cart store/API
-  }, []);
+
+    console.log( "THis is the userID ", currentUserId, " and thiis is the seller id", product?.sellerId);
+    if(currentUserId == null || currentUserId == "") {       
+        
+        Alert.alert("Login Required","Please login to add items to your cart.", [{text: "Login", onPress: () => router.push("/Login/LoginScreen")}, {text: "Cancel", style: "cancel"}]);
+        return
+      };
+
+
+
+    if(product?.id == null || product.sellerId == null) return;
+  
+      addCartApi({user_id: currentUserId, product_id: product?.id, seller_id: product.sellerId});
+
+
+      setInCart((p) => !p);
+    
+  }, [product?.sellerId, product?.id, currentUserId ]);
+
+ 
 
   const onFavourite = useCallback(() => {
     setInFavourites((p) => !p);
@@ -574,7 +636,14 @@ const ProductDetail = () => {
     );
   }, []);
 
+  
+
   const onSubmitReview = useCallback(() => {
+
+    if(currentUserId == null || currentUserId == "") {
+      Alert.alert("Please Login", "To send a comment you have to login please" , [{text: "Login", onPress: () => router.push("/Login/LoginScreen")}, {text: "Cancel", style: "cancel"}])
+      return;
+    }
     if (draftRating === 0) {
       Alert.alert("Rating required", "Please tap a star to rate this product.");
       return;
@@ -585,16 +654,22 @@ const ProductDetail = () => {
     }
     setSubmitting(true);
     setTimeout(() => {
-      const newComment: Comment = {
-        id:        `c${Date.now()}`,
-        author:    currentUserEmail?.split("@")[0] ?? "You",
-        text:      draftText.trim(),
-        rating:    draftRating,
-        likes:     0,
-        likedByMe: false,
-        reported:  false,
-        createdAt: "Just now",
-      };
+
+    const tempId = `temp-${Date.now()}`;
+
+    const optimisticComment: CommentResponse = {
+      id: tempId,
+      aurthor: full_name,
+      avatar: "",
+      text: draftText.trim(),
+      likes: 0,
+      rating: draftRating,
+      likedByMe: false,
+      reported: false,
+      createdAt: "Just now",
+    };
+
+      setComments((prev) => [optimisticComment, ...prev]);
 
       //THis is where i will add comment 
       console.log("This is the text of the comment being submitted:", draftText);
@@ -602,7 +677,9 @@ const ProductDetail = () => {
         aurthorId: currentUserId ?? "",
         productId: product?.id ?? "",
         text: draftText.trim(),
-      }).then(() => {
+      }).then((data) => {
+
+        //setComments(data);
         console.log("Comment added successfully");
       }).catch((err: any) => {
         console.error("Failed to add comment:", err);
@@ -612,7 +689,7 @@ const ProductDetail = () => {
 
       //setComments((prev) => [newComment, ...prev]);
       setDraftText("");
-      setDraftRating(0);
+      //setDraftRating(0);
       setSubmitting(false);
       Keyboard.dismiss();
       // TODO: POST to your comments API here
@@ -627,6 +704,7 @@ const ProductDetail = () => {
       </View>
     );
   }
+
   if (!product) {
     return (
       <View style={[styles.stateScreen, { backgroundColor: theme.screenBackground }]}>
@@ -634,6 +712,8 @@ const ProductDetail = () => {
       </View>
     );
   }
+
+  
 
   const images = product.imageUrls?.length > 0 ? product.imageUrls : ["fallback"];
 
@@ -643,14 +723,16 @@ const ProductDetail = () => {
       {/* ── Header ── */}
       <View style={[styles.header, { borderColor: isDark ? PRIMARY_DARK : "#e4f0e4" }]}>
         <Pressable onPress={onBack} hitSlop={12} style={styles.headerBtn}>
-          <Image
+         {/*} <Image
             source={require("../../assets/images/ProductDetail/back.png")}
-            style={[styles.headerIcon, { tintColor: theme.text }]}
-          />
+            style={[styles.headerIcon, { tintColor: theme.subText }]}
+          /> */}
+
+          <Text style={{ fontSize: 30, color: theme.text, fontWeight: "700" }} > ← </Text>
         </Pressable>
-        <Text style={[styles.headerTitle, { color: theme.text, fontSize: fs.md }]}>Product Detail</Text>
+        <Text style={[styles.headerTitle, { color: theme.text, fontSize: 17, fontWeight: "900", letterSpacing: -0.4 }]}>Product Detail</Text>
         <Pressable onPress={onShare} hitSlop={12} style={styles.headerBtn}>
-          <Text style={{ fontSize: 20 }}>🔗</Text>
+          <Text style={{ fontSize: 30, color: theme.text }}>➦</Text>
         </Pressable>
       </View>
 
@@ -715,7 +797,7 @@ const ProductDetail = () => {
             },
           ]}
         >
-          <Text style={{ fontSize: 13 }}>{product.isReacted ? "❤️" : "🤍"}</Text> 
+          <Text style={{ fontSize: 13 }}>{reacted ? "❤️" : "🤍"}</Text> 
           {reactionCount > 0 && (
             <Text style={{ fontSize: 10, fontWeight: "700", color: reacted ? "#e53935" : theme.readColor }}>
               {reactionCount}
@@ -750,15 +832,18 @@ const ProductDetail = () => {
             {product.pQuantity} of {product.pName} available
           </Text>
 
-          {/* Rating row */}
+          {/* Rating row    avgRating.toFixed(1) Math.round(avgRating) */}   
           <View style={styles.metaRow}>
-            <Stars rating={Math.round(avgRating)} size={14} />
+            <Stars
+              rating={Math.round(Number(product?.ratingData?.AverageRating ?? 0))}
+              size={14}
+            />
             <Text style={[styles.metaText, { color: theme.readColor }]}>
-              {avgRating.toFixed(1)} · {comments.length} reviews
+              {Number(product?.ratingData?.AverageRating ?? 0).toFixed(1)} · {comments.length} reviews
             </Text>
             {(product.views ?? 0) > 0 && (
               <Text style={[styles.metaText, { color: theme.readColor }]}>
-                · {product.views} views
+                 · {product.views} views
               </Text>
             )}
           </View>
@@ -791,11 +876,9 @@ const ProductDetail = () => {
 
 
             <View style={[styles.actionDivider, { backgroundColor: isDark ? "#1e331e" : "#e4f0e4" }]} />
-            
-            
 
             <IconBtn
-              emoji="🔗"
+              emoji="➦"
               label="Share"
               onPress={onShare}
               isDark={isDark}
@@ -838,7 +921,7 @@ const ProductDetail = () => {
               backgroundColor: theme.sectionBackground,
               borderColor: isDark ? PRIMARY_DARK : "#e4f0e4",
             }]}>
-              <Text style={{ fontSize: 16 }}>📍</Text>
+              <Text style={{ fontSize: 16 , color: theme.text}}>⌯✈︎</Text>
               <Text style={[styles.locationText, { color: theme.text }]}>{product.location}</Text>
             </View>
           )}
@@ -940,24 +1023,30 @@ const ProductDetail = () => {
             </Pressable>
           </View>
 
-          {/* Rating summary */}
+          {/* Rating summary avgRating.toFixed(1) Math.round(avgRating) */}
           <View style={[styles.ratingCard, {
             backgroundColor: isDark ? "#111e11" : "#fff",
             borderColor: isDark ? PRIMARY_DARK : "rgba(0,129,0,0.1)",
           }]}>
             <View style={styles.ratingLeft}>
-              <Text style={[styles.bigRating, { color: isDark ? "#d0ffd0" : "#0d1a0d" }]}>
-                {avgRating.toFixed(1)}
-              </Text>
-              <Stars rating={Math.round(avgRating)} size={16} />
+              <Text style={[styles.bigRating, { color: isDark ? "#d0ffd0" : "#0d1a0d" }]}> 
+                  {Number(product?.ratingData?.AverageRating ?? 0).toFixed(1)} 
+              </Text> 
+              <Stars rating={Math.round(Number(product?.ratingData?.AverageRating ?? 0))} size={16} />
               <Text style={[styles.ratingCount, { color: theme.readColor }]}>
                 {comments.length} reviews
               </Text>
             </View>
             <View style={styles.ratingRight}>
-              {ratingCounts.map(({ star, count }) => (
+              {/*{ratingCounts.map(({ star, count }) => (
                 <RatingBar key={star} star={star} count={count} total={comments.length} isDark={isDark} />
-              ))}
+              ))} */}
+
+              <RatingBar  star={5} count={product.ratingData.totalFiveRating} total={product.ratingData.totalRating} isDark={isDark} />
+              <RatingBar  star={4} count={product.ratingData.totalFourRating} total={product.ratingData.totalRating} isDark={isDark} />
+              <RatingBar  star={3} count={product.ratingData.totalThreeRating} total={product.ratingData.totalRating} isDark={isDark} />
+              <RatingBar  star={2} count={product.ratingData.totalTwoRating} total={product.ratingData.totalRating} isDark={isDark} />
+              <RatingBar  star={1} count={product.ratingData.totalOneRating} total={product.ratingData.totalRating} isDark={isDark} />
             </View>
           </View>
 
@@ -970,7 +1059,7 @@ const ProductDetail = () => {
               <Text style={[styles.writeTitle, { color: theme.text }]}>Leave a Review</Text>
               <View style={styles.starPicker}>
                 <Text style={[{ color: theme.readColor, fontSize: 13 }]}>Your rating:</Text>
-                <Stars rating={draftRating} size={26} interactive onRate={setDraftRating} />
+                <Stars rating={draftRating} size={26} interactive onRate={(data) => {setDraftRating(data); Rate(data)}} />
               </View>
               <View style={[styles.reviewInputWrap, {
                 backgroundColor: isDark ? "#152015" : "#f0faf0",
@@ -1088,7 +1177,7 @@ const styles = StyleSheet.create({
   },
   headerBtn:   { width: 36, height: 36, alignItems: "center", justifyContent: "center" },
   headerIcon:  { width: 20, height: 20, resizeMode: "contain" },
-  headerTitle: { fontWeight: "700" },
+  headerTitle: { },
 
   carouselWrapper: { position: "relative" },
   counterPill: {

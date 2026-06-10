@@ -1,7 +1,7 @@
 import { Colors, FontSize } from '@/constants/theme';
 import { increaseProductViewApi } from '@/src/api/productApi';
-import { useCartStore } from '@/src/store/cartStore';
-import { useProductStore } from '@/src/store/productStore';
+import { useCartProduct } from '@/src/hooks/useCartProduct';
+import { useProducts } from '@/src/hooks/useProducts';
 import { userStore } from '@/src/store/userStore';
 import { router } from 'expo-router';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -67,7 +67,7 @@ const CartCard = React.memo(({
           <Image
             source={item.pImage
               ? { uri: item.pImage }
-              : require("../../assets/images/HomeScreen/nike.png")}
+              : require("../../assets/images/ProductDetail/Hero Image.png")}
             style={cc.img}
             resizeMode="cover"
           />
@@ -224,7 +224,7 @@ const SugCard = React.memo(({
     }]}
   >
     <Image
-      source={item.pImage ? { uri: item.pImage } : require("../../assets/images/HomeScreen/nike.png")}
+      source={item.pImage ? { uri: item.pImage } : require("../../assets/images/ProductDetail/Hero Image.png")}
       style={sg.img}
       resizeMode="cover"
     />
@@ -256,44 +256,60 @@ const CartScreen = () => {
   const theme  = isDark ? Colors.dark : Colors.light;
   const fs     = FontSize.size;
 
-  const { email } = userStore();
-  const userEmail  = Array.isArray(email) ? email[0] : email;
+  const userId = userStore((state) => state.id);
+ // const user = userStore.getState();
 
-  const cartItems      = useCartStore((s) => s.cartItems);
-  const loading        = useCartStore((s) => s.loading);
-  const fetchCart      = useCartStore((s) => s.fetchCart);
-  const removeFromCart = useCartStore((s) => s.removeFromCart);
-  const isInCart       = useCartStore((s) => s.isInCart);
+  //const userId = user.id;
 
-  const recentListings = useProductStore((s) => s.recentListings);
+  console.log("Yay! hello i am the userId at the cart screen" , userId);
+  //const { email , id: userId} = userStore();
+ // const userEmail  = Array.isArray(email) ? email[0] : email;
+
+ 
+  const {
+    products: cartItems,
+    loading,
+    error,
+    fetchCartProduct: fetchCart,
+    addToCart,
+    removeFromCart,
+    isInCart,
+    totalValue,
+  } = useCartProduct(userId);
+
+  const { products: recentListings} = useProducts(userId);
+
+ // const recentListings = useProductStore((s) => s.recentListings);
 
   // Track which IDs are mid-removal for animation
   const [removingIds, setRemovingIds] = useState<Set<string>>(new Set());
   const [refreshing,  setRefreshing]  = useState(false);
 
   useEffect(() => {
-    if (userEmail) fetchCart(userEmail);
-  }, [userEmail]);
+
+   if (userId) fetchCart();
+  }, []);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    await fetchCart(userEmail);
+    await fetchCart();
     setRefreshing(false);
-  }, [userEmail]);
+  }, [userId]);
 
   // Suggested: items NOT in cart
   const suggested = useMemo(
     () => recentListings
       .filter((p) => !isInCart(p.id))
-      .sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0))
+      .sort((a, b) => (b.ratingData.AverageRating ?? 0) - (a.ratingData.AverageRating ?? 0))
       .slice(0, 8),
     [recentListings, cartItems]
   );
 
+  /*
   const totalValue = useMemo(
     () => cartItems.reduce((sum, item) => sum + Number(item.pAmount ?? 0), 0),
     [cartItems]
-  );
+  ); */
 
   const onProductClicked = useCallback((id: string) => {
     increaseProductViewApi(id);
@@ -317,7 +333,7 @@ const CartScreen = () => {
             setRemovingIds((prev) => new Set(prev).add(displayId));
             // Small delay so animation plays before item disappears
             await new Promise((r) => setTimeout(r, 300));
-            await removeFromCart(userEmail, productId, sellerEmail);
+            await removeFromCart(userId, productId, sellerEmail);
             setRemovingIds((prev) => {
               const next = new Set(prev);
               next.delete(displayId);
@@ -327,7 +343,7 @@ const CartScreen = () => {
         },
       ]
     );
-  }, [userEmail, removeFromCart]);
+  }, [userId, removeFromCart]);
 
   const onClearAll = useCallback(() => {
     Alert.alert(
@@ -341,18 +357,18 @@ const CartScreen = () => {
           onPress: async () => {
             // Remove each item sequentially
 
-            
+                      
             for (const item of cartItems) {
 
               if(item.sellerEmail == null) return;
               
-              await removeFromCart(userEmail, item.id, item.sellerEmail);
+              await removeFromCart(userId, item.id, item.sellerEmail);
             }
           },
         },
       ]
     );
-  }, [cartItems, userEmail, removeFromCart]);
+  }, [cartItems, userId, removeFromCart]);
 
   // ── Empty state ───────────────────────────────────────────────────────────
   if (!loading && cartItems.length === 0) {

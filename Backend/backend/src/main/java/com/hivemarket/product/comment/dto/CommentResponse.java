@@ -12,7 +12,9 @@ public record CommentResponse(
 		Integer likes,
 		Boolean likedByMe,
 		Boolean reported,
-		LocalDateTime createAt
+		LocalDateTime createdAt,
+		Integer rating
+		
 		
 		) {
 

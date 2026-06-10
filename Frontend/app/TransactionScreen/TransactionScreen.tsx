@@ -20,7 +20,7 @@ import { Colors, FontSize } from '@/constants/theme';
 import { initializePayment } from "@/src/api/paymentApi";
 import { increaseProductPurchaseApi, increaseProductViewApi } from "@/src/api/productApi";
 import { CardDetails, ChargeResult, usePaystackInApp } from '@/src/hooks/usePaystackInApp';
-import { useProductStore } from "@/src/store/productStore";
+import { useProducts } from '@/src/hooks/useProducts';
 import { userStore } from '@/src/store/userStore';
 import { router, useLocalSearchParams } from 'expo-router';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -114,8 +114,12 @@ const TransactionScreen = () => {
 
   const { id } = useLocalSearchParams<{ id: string }>();
 
-  const recentListings     = useProductStore((s) => s.recentListings);
-  const updateRecentListing = useProductStore((s) => s.updateRecentListing);
+  const user = userStore.getState();
+
+  const { products: recentListings } = useProducts(user.id);
+
+  //const recentListings     = useProductStore((s) => s.recentListings);
+  //const updateRecentListing = useProductStore((s) => s.updateRecentListing);
 
   const {
     status: chargeStatus, result: chargeResult, errorMsg,
@@ -186,9 +190,9 @@ const TransactionScreen = () => {
   const handleSuccess = useCallback(() => {
     if (!product) return;
     increaseProductPurchaseApi(String(product.id));
-    updateRecentListing(product.id, { purchases: (product.purchases || 0) + 1 });
+   // updateRecentListing(product.id, { purchases: (product.purchases || 0) + 1 });
     setScreen("success");
-  }, [product, updateRecentListing]);
+  }, [product]); // , updateRecentListing]);
 
   // ── Get reference from your backend, then charge ──────────────────────────
   const getRefAndCharge = useCallback(async (method: PayMethod, card?: CardDetails) => {
@@ -379,7 +383,8 @@ const TransactionScreen = () => {
       <KeyboardAvoidingView style={{ flex: 1, backgroundColor: theme.screenBackground }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
         <View style={[styles.header, { borderColor: isDark ? PRIMARY_DARK : "#e4f0e4" }]}>
           <Pressable onPress={() => setScreen("card_entry")} hitSlop={12} style={styles.headerBtn}>
-            <Image source={require("../../assets/images/ProductDetail/back.png")} style={[styles.headerIcon, { tintColor: theme.text }]} />
+           {/* <Image source={require("../../assets/images/ProductDetail/back.png")} style={[styles.headerIcon, { tintColor: theme.text }]} /> */}
+           <Text style={{ fontSize: 30, color: theme.subText, fontWeight: "700" }} > ← </Text>
           </Pressable>
           <Text style={[styles.headerTitle, { color: theme.text }]}>Enter PIN</Text>
           <View style={{ width: 36 }} />
@@ -388,7 +393,7 @@ const TransactionScreen = () => {
           <View style={[styles.lockCircle, { backgroundColor: isDark ? PRIMARY_DARK : PRIMARY_SOFT }]}>
             <Text style={{ fontSize: 36 }}>🔒</Text>
           </View>
-          <Text style={[styles.stepHeading, { color: theme.text }]}>Card PIN</Text>
+          <Text style={[styles.stepHeading, { color: theme.subText }]}>Card PIN</Text>
           <Text style={[styles.stepSub, { color: theme.readColor }]}>
             Enter your 4-digit card PIN to authorise this payment
           </Text>
@@ -427,9 +432,10 @@ const TransactionScreen = () => {
       <KeyboardAvoidingView style={{ flex: 1, backgroundColor: theme.screenBackground }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
         <View style={[styles.header, { borderColor: isDark ? PRIMARY_DARK : "#e4f0e4" }]}>
           <Pressable onPress={() => setScreen("card_entry")} hitSlop={12} style={styles.headerBtn}>
-            <Image source={require("../../assets/images/ProductDetail/back.png")} style={[styles.headerIcon, { tintColor: theme.text }]} />
+            {/*<Image source={require("../../assets/images/ProductDetail/back.png")} style={[styles.headerIcon, { tintColor: theme.text }]} /> */}
+            <Text style={{ fontSize: 30, color: theme.subText, fontWeight: "700" }} > ← </Text>
           </Pressable>
-          <Text style={[styles.headerTitle, { color: theme.text }]}>OTP Verification</Text>
+          <Text style={[styles.headerTitle, { color: theme.subText }]}>OTP Verification</Text>
           <View style={{ width: 36 }} />
         </View>
         <View style={styles.centredInner}>
@@ -475,9 +481,10 @@ const TransactionScreen = () => {
       <View style={[styles.screen, { backgroundColor: theme.screenBackground }]}>
         <View style={[styles.header, { borderColor: isDark ? PRIMARY_DARK : "#e4f0e4" }]}>
           <Pressable onPress={() => setScreen("checkout")} hitSlop={12} style={styles.headerBtn}>
-            <Image source={require("../../assets/images/ProductDetail/back.png")} style={[styles.headerIcon, { tintColor: theme.text }]} />
+            {/* <Image source={require("../../assets/images/ProductDetail/back.png")} style={[styles.headerIcon, { tintColor: theme.text }]} /> */}
+            <Text style={{ fontSize: 30, color: theme.subText, fontWeight: "700" }} > ← </Text>
           </Pressable>
-          <Text style={[styles.headerTitle, { color: theme.text }]}>Bank Transfer</Text>
+          <Text style={[styles.headerTitle, { color: theme.subText }]}>Bank Transfer</Text>
           <View style={{ width: 36 }} />
         </View>
         <ScrollView contentContainerStyle={{ padding: 20, gap: 16 }}>
@@ -544,9 +551,10 @@ const TransactionScreen = () => {
       <KeyboardAvoidingView style={{ flex: 1, backgroundColor: theme.screenBackground, paddingTop: 25 }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
         <View style={[styles.header, { borderColor: isDark ? PRIMARY_DARK : "#e4f0e4" }]}>
           <Pressable onPress={() => setScreen("checkout")} hitSlop={12} style={styles.headerBtn}>
-            <Image source={require("../../assets/images/ProductDetail/back.png")} style={[styles.headerIcon, { tintColor: theme.text }]} />
+            {/*<Image source={require("../../assets/images/ProductDetail/back.png")} style={[styles.headerIcon, { tintColor: theme.text }]} /> */}
+            <Text style={{ fontSize: 30, color: theme.subText, fontWeight: "700" }} > ← </Text>
           </Pressable>
-          <Text style={[styles.headerTitle, { color: theme.text }]}>Card Details</Text>
+          <Text style={[styles.headerTitle, { color: theme.subText }]}>Card Details</Text>
           <View style={{ width: 36 }} />
         </View>
 
@@ -672,9 +680,10 @@ const TransactionScreen = () => {
       {/* Header */}
       <View style={[styles.header, { borderColor: isDark ? PRIMARY_DARK : "#e4f0e4" }]}>
         <Pressable onPress={onBack} hitSlop={12} style={styles.headerBtn}>
-          <Image source={require("../../assets/images/ProductDetail/back.png")} style={[styles.headerIcon, { tintColor: theme.text }]} />
+          {/*<Image source={require("../../assets/images/ProductDetail/back.png")} style={[styles.headerIcon, { tintColor: theme.text }]} /> */}
+          <Text style={{ fontSize: 30, color: theme.subText, fontWeight: "700" }} > ← </Text>
         </Pressable>
-        <Text style={[styles.headerTitle, { color: theme.text }]}>Checkout</Text>
+        <Text style={[styles.headerTitle, { color: theme.subText }]}>Checkout</Text>
         <View style={{ width: 36 }} />
       </View>
 
@@ -702,7 +711,7 @@ const TransactionScreen = () => {
           style={[styles.productCard, { backgroundColor: theme.sectionBackground, borderColor: isDark ? PRIMARY_DARK : "#e4f0e4" }]}
         >
           <Image
-            source={product.pImage ? { uri: product.pImage } : require("../../assets/images/HomeScreen/nike.png")}
+            source={product.pImage ? { uri: product.pImage } : require("../../assets/images/ProductDetail/Hero Image.png")}
             style={styles.productImg}
           />
           <View style={styles.productInfo}>

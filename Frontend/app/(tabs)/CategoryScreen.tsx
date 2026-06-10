@@ -1,10 +1,9 @@
 import { Colors, FontSize } from '@/constants/theme';
 import { increaseProductViewApi } from '@/src/api/productApi';
-import { useProductStore } from '@/src/store/productStore';
+import { useProducts } from '@/src/hooks/useProducts';
+import { userStore } from '@/src/store/userStore';
 import { router } from 'expo-router';
 import React, { useCallback, useMemo, useState } from 'react';
-import {userStore} from '@/src/store/userStore';
-import { useProducts } from '@/src/hooks/useProducts';
 import {
   FlatList,
   Image,
@@ -84,7 +83,7 @@ const ProductCard = React.memo(({
     }]}
   >
     <Image
-      source={item.pImage ? { uri: item.pImage } : require("../../assets/images/HomeScreen/nike.png")}
+      source={item.pImage ? { uri: item.pImage } : require("../../assets/images/ProductDetail/Hero Image.png")}
       style={styles.productImg}
       resizeMode="cover"
     />

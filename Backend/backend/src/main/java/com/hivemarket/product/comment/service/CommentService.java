@@ -18,6 +18,8 @@ import com.hivemarket.product.comment.entity.Comment;
 import com.hivemarket.product.comment.entity.CommentLikes;
 import com.hivemarket.product.comment.repository.CommentLikeRepository;
 import com.hivemarket.product.comment.repository.CommentRepository;
+import com.hivemarket.product.rating.entity.Rating;
+import com.hivemarket.product.rating.repository.RatingRepository;
 import com.hivemarket.user.entity.User;
 import com.hivemarket.user.repository.UserRepository;
 
@@ -31,6 +33,7 @@ public class CommentService {
 	private final ProductRepository productRepo;
 	private final UserRepository userRepo;
 	private final CommentLikeRepository commentLikeRepo;
+	private final RatingRepository ratingRepo;
 	
 	public Comment save(Product product, User user, String text) {
 		
@@ -53,6 +56,8 @@ public class CommentService {
 		
 		List<CommentResponse> commentResponse = new ArrayList<>();
 		
+		
+		
 		System.out.println("This is the comments for bot the userID and productID " + comments.toString());
 		
 		
@@ -62,8 +67,11 @@ public class CommentService {
 			
 			Boolean likeByMe = commentLikeRepo.existsByUserIdAndCommentId(userId, comment.getId());
 			
+			Optional<Rating> getRating = ratingRepo.findByUserIdAndProductId(comment.getAurthor().getId(), productId);
 			
-				System.out.println("This is the commentsLikes from the above comment " );
+			Integer rating = getRating.isEmpty() ? 0 : getRating.get().getRating();
+			
+			System.out.println("This is the commentsLikes from the above comment " );
 				
 				//System.out.println("This is the likes " + likes + " and this is the likeByMe " + likeByMe);
 				
@@ -75,8 +83,8 @@ public class CommentService {
 						comment.getLikes(),
 						likeByMe,
 						comment.getReported(),
-						comment.getCreatedAt()
-						
+						comment.getCreatedAt(),
+						rating
 						);
 				
 				commentResponse.add(response);
@@ -99,7 +107,13 @@ public class CommentService {
 		System.out.println("This is the comments " + comments.toString());
 		
 		
-		for(Comment comment: comments) {				
+		for(Comment comment: comments) {	
+			
+			Optional<Rating> getRating = ratingRepo.findByUserIdAndProductId(comment.getAurthor().getId(), productId);
+			
+			Integer rating = getRating.isEmpty() ? 0 : getRating.get().getRating();
+			
+			
 				
 				CommentResponse response = new CommentResponse (
 						comment.getId(),
@@ -109,8 +123,8 @@ public class CommentService {
 						comment.getLikes(),
 						false,
 						comment.getReported(),
-						comment.getCreatedAt()
-						
+						comment.getCreatedAt(),
+						rating
 						);
 				
 				commentResponse.add(response);
@@ -133,6 +147,14 @@ public class CommentService {
 		
 		Comment comment = save(product, user, request.text());
 		
+		
+		Optional<Rating> getRating = ratingRepo.findByUserIdAndProductId(comment.getAurthor().getId(), request.productId());
+		
+		Integer rating = getRating.isEmpty() ? 0 : getRating.get().getRating();
+		
+		
+		
+		
 		/*
 		 * CommentLikes commentLike = CommentLikes.builder() .user(user)
 		 * .comment(comment) .likeAt(comment.getCreatedAt()) .build();
@@ -150,7 +172,8 @@ public class CommentService {
 				comment.getLikes(),
 				false,//comment.getLikedByMe(),
 				comment.getReported(),
-				comment.getCreatedAt()
+				comment.getCreatedAt(),
+				rating
 				);
 	}
 	

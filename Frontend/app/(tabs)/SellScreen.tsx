@@ -1,5 +1,7 @@
 import { Colors, FontSize } from '@/constants/theme';
+import { BackendProductRequest, createProductOnlyApi, uploadProductImagesApi } from '@/src/api/productApi';
 import { useProductStore } from "@/src/store/productStore";
+import { userStore } from "@/src/store/userStore";
 import { ProductCondition } from "@/src/types/products";
 import * as ImagePicker from "expo-image-picker";
 import { router } from "expo-router";
@@ -67,11 +69,15 @@ const SellScreen = () => {
   const theme  = isDark ? Colors.dark : Colors.light;
   const fs     = FontSize.size;
 
+  const user = userStore.getState();
+
+  
+
   const {
     productName, description, price, category, condition, location, quantity,
-    images, loading, error, successMessage,
+    images,  error, successMessage,
     setProductName, setDescription, setPrice, setCategory, setProductQuantity,
-    setCondition, setLocation, addImages, removeImage, createProduct,
+    setCondition, setLocation, addImages, removeImage
   } = useProductStore();
 
  
@@ -79,6 +85,7 @@ const SellScreen = () => {
   const [imageIndex,    setImageIndex]    = useState(0);
   const [catVisible,    setCatVisible]    = useState(false);
   const [currentStep,   setCurrentStep]   = useState(1); // 1: photos+basic, 2: details, 3: pricing
+  const [loading , setLoading] = useState(false);
 
   const pickImages = useCallback(async (limit: number) => {
     const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -98,10 +105,55 @@ const SellScreen = () => {
     }
   }, [addImages]);
 
+      const data: BackendProductRequest = {
+
+      pName:        productName.trim(),
+      pDetail:      description.trim(),
+      pAmount:      Number(price),
+      pCondition:   condition as ProductCondition,
+      pQuantity:    Number(quantity),
+      category:     category,
+      location:     location.trim(),
+      sellerName:   user.full_name , 
+      sellerImage:  user.profile_picture, 
+      sellerEmail:  user.email,
+      sellerId:     user.id,
+
+    }
+
   const handleSubmit = useCallback(async () => {
-    const result = await createProduct();
-    if (result.success) router.back();
-  }, [createProduct]);
+
+    setLoading(true);
+
+      await createProductOnlyApi(data).then((response) => {
+      console.log("Product created successfully:", response);
+
+      const uploadImages = async() => {
+
+        if (images.length > 0) {
+          try {
+            const uploadResult = await uploadProductImagesApi(response.id, images);
+            console.log("Images uploaded successfully:", uploadResult);
+          } catch (uploadError) {
+            console.error("Failed to upload images:", uploadError);
+          }
+        }
+      }
+
+    uploadImages();
+    }).then(() => {     
+
+
+    });
+
+
+    setLoading(false);
+
+    console.log("Navigating to HomeScreen after product creation and image upload...");
+    
+    router.push("/(tabs)/HomeScreen");
+    //if (result.success) router.back();
+  }, [data, images]);
 
   const onCancel = useCallback(() => {
     Alert.alert("Discard Listing?", "Your changes won't be saved.", [
@@ -147,9 +199,9 @@ const SellScreen = () => {
 
   return (
     <KeyboardAvoidingView
-      style={{ flex: 1, backgroundColor: theme.screenBackground , paddingTop: 25}}
+      style={{ flex: 1, backgroundColor: theme.screenBackground , paddingTop: 2}}
       behavior={Platform.OS === "ios" ? "padding" : "height"}
-      keyboardVerticalOffset={Platform.OS === "ios" ? 20 : 0}
+      keyboardVerticalOffset={Platform.OS === "ios" ? 5 : 0}
     >
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <View style={{ flex: 1, paddingBottom: 60  }}>

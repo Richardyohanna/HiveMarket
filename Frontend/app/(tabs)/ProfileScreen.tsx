@@ -24,8 +24,8 @@ import ProductListingsTab from '@/components/ProductListingsTab';
 import SettingsTab from '@/components/SettingsTab';
 import SoldListingTab from '@/components/SoldListingTab';
 import { Colors } from '@/constants/theme';
+import { useProducts } from '@/src/hooks/useProducts';
 import { removeToken } from '@/src/services/authStorage';
-import { useProductStore } from '@/src/store/productStore';
 import { userStore } from '@/src/store/userStore';
 import { router } from 'expo-router';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
@@ -55,8 +55,12 @@ const ProfileScreen = () => {
   const isDark = scheme === "dark";
   const theme  = isDark ? Colors.dark : Colors.light;
 
+  const user = userStore.getState();
+
   // H2 — Subscribe to productStore (standard Zustand, safe)
-  const recentListings = useProductStore((s) => s.recentListings);
+
+  const {products: recentListings} = useProducts(user.id)
+  //const recentListings = useProductStore((s) => s.recentListings);
 
   // H3 — Tab state
   const [activeTab, setActiveTab] = useState<Tab>("listings");
@@ -66,7 +70,7 @@ const ProfileScreen = () => {
 
   // ── Read user data via getState() — ZERO hooks, plain function call ──────
   // This never affects the hook count. We subscribe manually below.
-  const user = userStore.getState();
+  
 
   // H5 — Subscribe to userStore changes without calling it as a hook
   // When the store changes, we increment the counter to trigger a re-render,
@@ -150,25 +154,28 @@ const ProfileScreen = () => {
 
       {/* ── Navbar ── */}
       <View style={[styles.navbar, { borderColor: isDark ? PRIMARY_DARK : "#e4f0e4" }]}>
-        
-         <Pressable 
+        <Pressable 
           onPress={onBack}         
           hitSlop={12}
         >
-          <Image
+           
+        {/*<Image
             source={require("../../assets/images/ProductDetail/back.png")}
             style={[styles.navIcon, { tintColor: PRIMARY }]}
-          />
+          /> */}
+
+          <Text style={{ fontSize: 30, color: theme.text, fontWeight: "700" }} > ← </Text>
         </Pressable>
         <Text style={[styles.navTitle, { color: theme.text, textAlign: "center", alignSelf: "center"}]}>My Profile</Text>
         <Pressable
-          style={[styles.navShare, { backgroundColor: isDark ? PRIMARY_DARK : PRIMARY_SOFT }]}
+          style={[styles.navShare]}// { backgroundColor: isDark ? PRIMARY_DARK : PRIMARY_SOFT }]}
           hitSlop={12}
         >
-          <Image
+          {/*<Image
             source={require("../../assets/images/Profile/share.png")}
             style={[styles.navIcon, { tintColor: PRIMARY }]}
-          />
+          /> */}
+          <Text style={{ fontSize: 30, color: theme.text }}>➦</Text>
         </Pressable>
       </View>
 

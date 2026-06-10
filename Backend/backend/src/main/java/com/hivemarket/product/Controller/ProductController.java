@@ -84,6 +84,9 @@ public class ProductController {
     
     @DeleteMapping
     public ResponseEntity<String> deleteById(@Valid @RequestParam UUID id) {
+    	
+    	System.out.println("Deleting product with id " + id);
+    	
         String response = productService.deleteProductById(id);
         return ResponseEntity.ok(response);
     }

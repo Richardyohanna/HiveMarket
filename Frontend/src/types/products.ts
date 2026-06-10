@@ -1,3 +1,4 @@
+
 export type ProductCondition =
   | "NEW"
   | "LIKE NEW"
@@ -21,6 +22,25 @@ export interface CreateProductPayload {
   sellerEmail: string;
 }
 
+export interface RatingRequest {
+
+  userId: string;
+  productId: string;
+  rating: number;
+
+}
+
+export interface RatingResponse {
+  	AverageRating: number;
+		userRating: number;
+		totalFiveRating: number;
+		totalFourRating: number;
+		totalThreeRating: number;
+		totalTwoRating: number;
+		totalOneRating: number;
+    totalRating: number;
+}
+
 export interface ProductResponse {
   id: string;
   pName: string;
@@ -40,10 +60,12 @@ export interface ProductResponse {
   imageUrls: string[];
   createdAt: string;
 
+
+
   reactions: number;
   views: number;
   purchases: number;
-  rating: number;
+  ratingData: RatingResponse;
 }
 
 export interface CreateProductResult {
@@ -79,7 +101,7 @@ export interface RecentListingItem {
   reactions: number;
   views: number;
   purchases: number;
-  rating: number;
+  ratingData: RatingResponse;
 }
 
 export interface ReactionRequest {
@@ -104,6 +126,7 @@ export interface CommentResponse {
   likedByMe: boolean;
   reported: boolean;
   createdAt: string;
+  
 };
 
 export interface CommentRequest { 
@@ -129,6 +152,7 @@ export interface ProductStore {
   sellerLocation: string;
   isReacted: boolean;
   
+
   recentListings: RecentListingItem[];
   loading: boolean;
   error: string | null;
@@ -146,6 +170,7 @@ export interface ProductStore {
   setSellerImage: (value: string) => void;
   setSellerLocation: (value: string) => void;
   setProductQuantity: (value: number) => void;
+  
 
   addImages: (newImages: string[]) => void;
   removeImage: (index: number) => void;

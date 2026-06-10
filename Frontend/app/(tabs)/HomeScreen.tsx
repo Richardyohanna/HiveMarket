@@ -3,7 +3,7 @@ import ScrollWithRefresh from '@/hooks/ScrollWithRefresh';
 import { useProducts } from '@/src/hooks/useProducts';
 import { userStore } from '@/src/store/userStore';
 import { router } from 'expo-router';
-import React, { useCallback, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Animated,
   Pressable,
@@ -37,15 +37,13 @@ const HomeScreen = () => {
   const {
     products,
     loading,
-    refetch,
+    refetch
   } = useProducts(userId);
 
   const [search,         setSearch]         = useState("");
   const [activeFilter,   setActiveFilter]   = useState("All");
   const [searchFocused,  setSearchFocused]  = useState(false);
   const [showResults,    setShowResults]    = useState(false);
-
- 
 
   //console.log("HomeScreen rendered with userId:", userId, "and recentListings count:", recentListings.length);
 
@@ -61,6 +59,13 @@ const HomeScreen = () => {
   };
 
 
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+        await refetch();
+    }    
+    fetchProducts();
+  }, []); 
 
 
   // Navigate to category with search pre-filled

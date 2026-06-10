@@ -1,7 +1,7 @@
 import { Colors, generalStyle, PRIMARY, PRIMARY_DARK, PRIMARY_SOFT, RECENT_PREVIEW_COUNT } from "@/constants/theme";
 import { chatSocketService } from "@/src/api/chatSocket";
 import { addReactionApi } from "@/src/api/productApi";
-import { useCartProduct } from "@/src/hooks/useCartProduct";
+//import { useCartProduct } from "@/src/hooks/useCartProduct";
 import { userStore } from "@/src/store/userStore";
 import { ReactionResponse, RecentListingItem } from "@/src/types/products";
 import { router } from "expo-router";
@@ -60,35 +60,21 @@ export const ProductCard = React.memo(({
   theme: typeof Colors.light;
   onPress: () => void;
 }) => {
+  const { email: currentUserEmail, id: currentUserId } = userStore();
 
-  const user = userStore.getState();
-
-  const currentUserEmail = user.email;
-  const currentUserId = user.id;
-
-  //const { email: currentUserEmail, id: currentUserId } = userStore();
-   
-  const { isInCart, addToCart } = useCartProduct(currentUserId);
-
+  // All hooks must be called here, before any other logic
   const [addedToCart, setAddedToCart] = useState(false);
   const [reactionCount, setReactionCount] = useState(0);
   const [reacted, setReacted] = useState(false);
   const [serverReaction, setServerReaction] = useState<ReactionResponse | null>(null);
 
-
-  const isNew = item.pQuality === "NEW";
-
-
   useEffect(() => {
-
     console.log("Initializing reaction state for product:", item.id, "with isReacted:", item.isReacted, "and reactions:", item.reactions);
     setReacted(item.isReacted);
     setReactionCount(item.reactions || 0);
   }, [item.reactions]);
 
-
   useEffect(() => {
-
     if(!chatSocketService.isConnected()) return;
 
     const unsubscribe = chatSocketService.updateProduct(item.id, (data) => {
@@ -98,7 +84,6 @@ export const ProductCard = React.memo(({
         console.log("Received reaction update for current user, updating local state");
         setServerReaction(data);
         setReactionCount(data.reactions);
-        // setReacted(data.isReacted);
       } else {
         setReactionCount(data.reactions);
       }
@@ -109,95 +94,52 @@ export const ProductCard = React.memo(({
         unsubscribe();
       }
     };
+  }, [item.id, currentUserId]);
 
-  }, [item.id]);
-
-
-  //console.log("this is the reaction data in the product layout", reactionData);
+  const isNew = item.pQuality === "NEW";
 
   const addToCarts = () => {
-
     if(item.sellerEmail == null || currentUserEmail == null || currentUserEmail == "") {
-     
       setAddedToCart(false);
       Alert.alert("Login Required","Please login to add items to your cart.", [{text: "Login", onPress: () => router.push("/Login/LoginScreen")}, {text: "Cancel", style: "cancel"}]);
       return
     };
-
     setAddedToCart(true);
-
-  /*
-   if(isInCart(item.id)) {
-
-    alert("This item is already in your cart.");
-    return;
-   }
-    */
-
-   if(item.sellerId == null) return;
-
-    addToCart(currentUserId,item.id,item.sellerId);
   }
 
+  const handleReaction = () => {
+    if (!currentUserId) {
+      Alert.alert("Login Required","Please login to react to products.", [{text: "Login", onPress: () => router.push("/Login/LoginScreen")}, {text: "Cancel", style: "cancel"}]);
+      return;
+    }
 
+    console.log("Is Reacted before toggle:", reacted);
+    const nextReacted = !reacted;
+    console.log("Is Reacted after toggle:", nextReacted);
 
+    setReacted(nextReacted);
+    setReactionCount(prev => nextReacted ? prev + 1 : prev - 1);
 
+    const reactionData = {
+      productId: item.id,
+      userId: currentUserId,
+    }
 
+    console.log("Preparing to send reaction data:", reactionData);
+    console.log("isReacted state at reaction time:", reacted);
 
+    addReactionApi(reactionData, (data) => {
+      console.log("Reaction updated:", data);
+    }).catch((err) => {
+      console.error("Failed to update reaction:", err);
+    });
+  };
 
-const handleReaction = () => {
+  console.log("Rendering ProductCard for item:", item.id, "with reactions:", reactionCount, "and reacted state:", reacted);
 
-  if (!currentUserId) {
-
-    Alert.alert("Login Required","Please login to react to products.", [{text: "Login", onPress: () => router.push("/Login/LoginScreen")}, {text: "Cancel", style: "cancel"}]);
-  //("User ID is not available for reactions");
-    return;
-  }
-
-console.log("Is Reacted before toggle:", reacted);
-const nextReacted = !reacted;
-
-console.log("Is Reacted before toggle:", nextReacted);
-
-setReacted(nextReacted);
-
-setReactionCount(prev =>
-  nextReacted ? prev + 1 : prev - 1
-);
-
-  const reactionData = {
-
-    productId: item.id,
-    userId: currentUserId,
-
-  }
-
-  console.log("Preparing to send reaction data:", reactionData);
-  console.log("isReacted state at reaction time:", reacted);
-  
-   console.log("Reaction data:", reactionData);
-
-   addReactionApi(reactionData, (data) => {
-    console.log("Reaction updated:", data);
-   // setServerReaction(data);
-    //
-  }).catch((err) => {
-    console.error("Failed to update reaction:", err);
-    // Optionally revert UI state here if the API call fails
-  });
-
-
-
-  //setReacted(false);
-
-};
-
-console.log("Rendering ProductCard for item:", item.id, "with reactions:", reactionCount, "and reacted state:", reacted);
-
-const handleAddToCart = () => {
-  addToCarts();
-  
-};
+  const handleAddToCart = () => {
+    addToCarts();
+  };
 
   return (
     <Pressable
@@ -209,7 +151,7 @@ const handleAddToCart = () => {
     >
       <View style={generalStyle.cardImgWrapper}>
         <Image
-          source={item.pImage ? { uri: item.pImage } : require("../../assets/images/ProductDetail/Hero Image.png")}
+          source={item.pImage ? { uri: item.pImage } : require("../../assets/images/HomeScreen/nike.png")}
           style={generalStyle.cardImg}
           resizeMode="cover"
         />
@@ -233,7 +175,7 @@ const handleAddToCart = () => {
             },
           ]}
         >
-          <Text style={{ fontSize: 13 }}>{reacted ? "❤️" : "🤍"}</Text>{/**reacted <-- that was the former logic */}
+          <Text style={{ fontSize: 13 }}>{reacted ? "❤️" : "🤍"}</Text>
           {reactionCount > 0 && (
             <Text style={{ fontSize: 10, fontWeight: "700", color: reacted ? "#e53935" : theme.readColor }}>
               {reactionCount}
@@ -248,7 +190,7 @@ const handleAddToCart = () => {
         </Text>
         {item.location ? (
           <View style={generalStyle.locationRow}>
-            <Text style={[generalStyle.locationPin, { color: PRIMARY }]}>⌯✈︎</Text>
+            <Text style={[generalStyle.locationPin, { color: PRIMARY }]}>📍</Text>
             <Text numberOfLines={1} style={[generalStyle.locationText, { color: theme.readColor }]}>
               {item.location}
             </Text>
@@ -260,7 +202,7 @@ const handleAddToCart = () => {
         <View style={generalStyle.metaRow}>
           <Text style={generalStyle.star}>★</Text>
           <Text style={[generalStyle.ratingVal, { color: theme.readColor }]}>
-            {Number(item.ratingData.AverageRating || 0).toFixed(1)}
+            {Number(item.rating || 0).toFixed(1)}
           </Text>
           {(item.views ?? 0) > 0 && (
             <Text style={[generalStyle.viewCount, { color: theme.readColor }]}>
@@ -268,9 +210,6 @@ const handleAddToCart = () => {
             </Text>
           )}
         </View>
-
-
-
 
         <View style={{ flexDirection: "row", gap: 6, alignItems: "center" }}>
           <Pressable style={[generalStyle.buyBtn, { flex: 1 }]} onPress={onPress}>
@@ -332,7 +271,7 @@ export const RecentStrip = React.memo(({
           }]}
         >
           <Image
-            source={item.pImage ? { uri: item.pImage } : require("../../assets/images/ProductDetail/Hero Image.png")}
+            source={item.pImage ? { uri: item.pImage } : require("../../assets/images/HomeScreen/nike.png")}
             style={generalStyle.stripImg}
             resizeMode="cover"
           />
@@ -386,5 +325,3 @@ export const GridBlockView = React.memo(({
     </View>
   );
 }, (p, n) => p.isDark === n.isDark && p.items === n.items);
-
-

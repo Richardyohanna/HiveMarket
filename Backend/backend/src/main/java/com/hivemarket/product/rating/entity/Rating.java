@@ -1,8 +1,8 @@
-package com.hivemarket.cart.Entity;
+package com.hivemarket.product.rating.entity;
 
-import java.time.LocalDateTime;
 import java.util.UUID;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.hivemarket.product.Entity.Product;
 import com.hivemarket.user.entity.User;
 
@@ -16,6 +16,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
+import jakarta.persistence.Version;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -25,12 +26,12 @@ import lombok.ToString;
 
 @Entity
 @Table(
-    name = "cart",
-    uniqueConstraints = {
-        @UniqueConstraint(
-            columnNames = {"user_id", "product_id"}
-        )
-    }
+		name = "rating",
+		uniqueConstraints = {
+			@UniqueConstraint(						
+					columnNames = {"user_id", "product_id"}						
+					)
+		}
 )
 @Getter
 @Setter
@@ -38,25 +39,28 @@ import lombok.ToString;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Cart {
+public class Rating {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID id;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id")
-    @ToString.Exclude
-    private User user; // buyer
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "product_id")
-    @ToString.Exclude
-    private Product product;
-
-    @Column(name = "quantity")
-    private Integer quantity;
-    
-    @Column(name= "createdAt")
-    private LocalDateTime createdAt;
+	@Id
+	@GeneratedValue(strategy= GenerationType.UUID)
+	private UUID id;
+	
+	@Column(name ="rating_count")
+	@Builder.Default
+	private Integer rating = 0;
+	
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "product_id")
+	@ToString.Exclude
+	@JsonIgnore
+	private Product product;
+	
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "user_id")
+	@ToString.Exclude
+	@JsonIgnore
+	private User user;
+	
+	@Version
+	private Long version;
 }

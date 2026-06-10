@@ -1,19 +1,41 @@
 import { create } from "zustand";
 import {
-  createProductOnlyApi,
-  getAllProductsApi,
-  uploadProductImagesApi,
-} from "../api/productApi";
-import {
-  CreateProductResult,
   ProductCondition,
   ProductStore,
-  RecentListingItem,
+  RecentListingItem
 } from "../types/products";
 
 export function formatTimeAgo(dateString: string): string {
-  const now = new Date().getTime();
-  const posted = new Date(dateString).getTime();
+
+  console.log(dateString, "This is the date of the comment");
+  
+  if (!dateString) return "Unknown time";
+
+  let normalized = dateString;
+
+  // CASE 1: has microseconds (e.g. .346125)
+  if (/\.\d{3,}/.test(dateString)) {
+    // keep only first 3 digits of milliseconds
+    normalized = dateString.replace(
+      /\.(\d{3})\d+/,
+      ".$1"
+    );
+  }
+
+  // CASE 2: missing timezone (no Z, no offset)
+  const hasTimezone =
+    dateString.includes("Z") ||
+    dateString.includes("+") ||
+    dateString.includes("-");
+
+  if (!hasTimezone) {
+    normalized += "Z";
+  }
+
+  const posted = new Date(normalized).getTime();
+  if (isNaN(posted)) return "Invalid date";
+
+  const now = Date.now();
   const diffMs = now - posted;
 
   const minutes = Math.floor(diffMs / (1000 * 60));

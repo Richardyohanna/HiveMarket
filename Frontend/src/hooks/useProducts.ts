@@ -1,7 +1,7 @@
-import { useEffect, useState, useCallback } from "react";
 import { getAllProductsApi } from "@/src/api/productApi";
-import { RecentListingItem } from "@/src/types/products";
 import { formatTimeAgo } from "@/src/store/productStore";
+import { RecentListingItem } from "@/src/types/products";
+import { useCallback, useEffect, useState } from "react";
 
 export function useProducts(userId: string | null) {
   const [products, setProducts] = useState<RecentListingItem[]>([]);
@@ -38,7 +38,7 @@ export function useProducts(userId: string | null) {
         reactions: item.reactions || 0,
         views: item.views || 0,
         purchases: item.purchases || 0,
-        rating: item.rating || 0,
+        ratingData: item.ratingData || 0,
         isReacted: item.isReacted || false,
       }));
 
@@ -49,6 +49,7 @@ export function useProducts(userId: string | null) {
       setLoading(false);
     }
   }, [userId]);
+
 
   useEffect(() => {
     fetchProducts();

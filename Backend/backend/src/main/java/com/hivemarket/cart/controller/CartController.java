@@ -36,10 +36,10 @@ public class CartController {
 	}
 	
 	@GetMapping("/all")
-	public ResponseEntity<List<ProductResponse>> findAll(@RequestParam String user_email){
+	public ResponseEntity<List<ProductResponse>> findAll(@RequestParam UUID userId){
 		
-		System.out.println("Connected to /all " + user_email);
-		List<ProductResponse> result = service.findAllCart(user_email);
+		System.out.println("Connected to /all  cart " + userId);
+		List<ProductResponse> result = service.findAllCart(userId);
 		
 		return ResponseEntity.ok(result);
 	}
@@ -49,8 +49,8 @@ public class CartController {
 		
 		System.out.println(request + "NEEDS to be deleted");
 		
-		UUID id = service.deleteCart(request);
+		String response = service.deleteCart(request);
 		
-		return ResponseEntity.ok(id + " Successfully deleted");
+		return ResponseEntity.ok(response);
 	}
 }

@@ -1,7 +1,9 @@
 package com.hivemarket.cart.service;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.stereotype.Service;
@@ -13,6 +15,13 @@ import com.hivemarket.product.DTO.ProductResponse;
 import com.hivemarket.product.Entity.Image;
 import com.hivemarket.product.Entity.Product;
 import com.hivemarket.product.Repository.ProductRepository;
+import com.hivemarket.product.rating.dto.RatingResponse;
+import com.hivemarket.user.entity.User;
+import com.hivemarket.user.repository.UserRepository;
+
+import error.CartNotFoundException;
+import error.ProductNotFoundException;
+import error.UserNotFoundException;
 
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -23,6 +32,7 @@ public class CartService {
 
 	private final CartRepository cartRepo;
 	private final ProductRepository productRepo;
+	private final UserRepository userRepo;
 	
     private ProductResponse mapResponse(Product product) {
         List<String> imageUrls = product.getImages() == null
@@ -51,66 +61,63 @@ public class CartService {
                 product.getReactions(),
                 product.getViews(),
                 product.getPurchases(),
-                product.getRating(),
+                new RatingResponse(0.0,0,0,0,0,0,0,0),
                 false
         );
     }
     
+    
     @Transactional
     public String addCart(CartResponse request) {
-    	
-    	
-		
-		Cart user = cartRepo.findByUserEmailAndProductIdAndSellerEmail(request.user_email(), request.product_id(), request.seller_email());
-		
-		System.out.println("THis is the cart that i find " + user);
-		
-		if(user != null ) {
-			
-			return "This product is already in you cart";
-			
-		}
-    	
-    	Cart cart = Cart.builder()
-    			.userEmail(request.user_email())
-    			.productId(request.product_id())
-    			.sellerEmail(request.seller_email())
-    			.build();
-    	
 
-    	cartRepo.save(cart);
-    	
-    	return cart.toString();
+        User user = userRepo.findById(request.user_id())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        Product product = productRepo.findById(request.product_id())
+                .orElseThrow(() -> new RuntimeException("Product not found"));
+
+        Optional<Cart> existingCart =
+                cartRepo.findByUserIdAndProductId(
+                        user.getId(),
+                        product.getId());
+
+        if (existingCart.isPresent()) {
+
+            Cart cart = existingCart.get();
+
+            cart.setQuantity(cart.getQuantity() + 1);
+
+            cartRepo.save(cart);
+
+            return "Cart quantity updated";
+        }
+
+        Cart cart = Cart.builder()
+                .user(user)
+                .product(product)
+                .quantity(1)
+                .createdAt(LocalDateTime.now())
+                .build();
+
+        cartRepo.save(cart);
+
+        return "Product added to cart";
     }
 	
-	@Transactional(readOnly = true)
-	public ProductResponse findCart(CartResponse request) {
-		
-		if(request.user_email() == null || request.product_id() == null || request.seller_email() == null) {
-			return null;
-		}
-		
-		Cart user = cartRepo.findByUserEmailAndProductIdAndSellerEmail(request.user_email(), request.product_id(), request.seller_email());
-		
-		Product product = productRepo.findById(user.getProductId()).orElseThrow(() -> new RuntimeException("Cannot Find product"));
-		
-		
-		
-		return mapResponse(product);
-	}
+	
 	
 	
 	@Transactional(readOnly = true)
-	public List<ProductResponse> findAllCart(String user_email){
+	public List<ProductResponse> findAllCart(UUID userId){
 		
 		List<ProductResponse> response = new ArrayList<>();
 		
-		List<Cart> user = cartRepo.findByUserEmail(user_email);
+		List<Cart> user = cartRepo.findByUserId(userId);
 		
 
 		for(Cart cart: user) {
 			
-			Product product = productRepo.findById(cart.getProductId()).orElseThrow(() -> new RuntimeException("Cannot Find product"));
+			Product product = cart.getProduct();
 			
 			
 			response.add(mapResponse(product));
@@ -123,14 +130,17 @@ public class CartService {
 	
 	
 	@Transactional
-	public UUID deleteCart(CartResponse request) {
+	public String deleteCart(CartResponse request) {
 		
-		Cart user = cartRepo.findByUserEmailAndProductIdAndSellerEmail(request.user_email(), request.product_id(), request.seller_email());
+		Product product = productRepo.findById(request.product_id()).orElseThrow(() -> new ProductNotFoundException("Product Not found with Id " + request.product_id()) );
 		
-		cartRepo.deleteById(user.getId());
+		User user = userRepo.findById(request.user_id()).orElseThrow(() -> new UserNotFoundException("User not found wit Id " + request.user_id()));
 		
-		return user.getId();
+		Cart findCart = cartRepo.findByUserIdAndProductId(user.getId(), product.getId()).orElseThrow(() -> new CartNotFoundException("Cannot find the cart " ));
+		
+		cartRepo.deleteById(findCart.getId());
+		
+		return "Product Deleted successfully";
 	}
-	
-	
+		
 }

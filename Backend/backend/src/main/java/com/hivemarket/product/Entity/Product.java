@@ -9,7 +9,9 @@ import java.util.UUID;
 import org.hibernate.annotations.BatchSize;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.hivemarket.cart.Entity.Cart;
 import com.hivemarket.product.comment.entity.Comment;
+import com.hivemarket.product.rating.entity.Rating;
 import com.hivemarket.reaction.entity.Reaction;
 import com.hivemarket.user.entity.User;
 
@@ -76,6 +78,18 @@ public class Product {
     @JsonIgnore
     private List<Comment> comments = new ArrayList<>();
 
+    @OneToMany(
+    		mappedBy = "product",
+    		cascade = CascadeType.ALL,
+    		orphanRemoval = true    		
+    		)
+    @Builder.Default
+    @BatchSize(size = 30)
+    @ToString.Exclude
+    @JsonIgnore
+    private List<Cart> cart = new ArrayList<>();
+
+    
     private String status;
 
     private LocalDateTime createdAt;
@@ -89,11 +103,24 @@ public class Product {
     @Column(name = "reactions")
     @Builder.Default
     private Integer reactions = 0;
+    
+    @OneToMany(
+    		mappedBy = "product",
+    		cascade = CascadeType.ALL,
+    		orphanRemoval = true
+    		)
+    @Builder.Default
+    @BatchSize(size = 30)
+    @ToString.Exclude
+    @JsonIgnore 
+    private List<Rating> rating = new ArrayList<>();
    
     
-	@Column(name = "rating")
-	@Builder.Default
-	private Integer rating = 0;  //This will be a class or an Entity on it's own
+	/*
+	 * @Column(name = "rating")
+	 * 
+	 * @Builder.Default private Integer rating = 0;
+	 */ //This will be a class or an Entity on it's own
 	
     @Version
     private Long version;

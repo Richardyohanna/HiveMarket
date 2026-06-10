@@ -51,14 +51,14 @@ export async function addCartApi(request: CartResponse): Promise<void> {
 
 // ── GET /api/cart/all?user_email=xxx ─────────────────────────────────────────
 // Returns List<ProductResponse> from your backend
-export async function getAllCartProductsApi(email: string): Promise<ProductResponse[]> {
+export async function getAllCartProductsApi(userId: string): Promise<ProductResponse[]> {
   try {
     const token = await getToken();
     if (!token) throw new Error("Not authenticated");
 
-    console.log(email, "is the user email used to fetch cart products");
+    console.log(userId, "is the user ID used to fetch cart products");
     const response = await fetchWithTimeout(
-      `${BASE_URL}/all?user_email=${encodeURIComponent(email)}`,
+      `${BASE_URL}/all?userId=${userId}`,
       {
         method: "GET",
         headers: {
@@ -68,7 +68,7 @@ export async function getAllCartProductsApi(email: string): Promise<ProductRespo
       }
     );
 
-    console.log(email, "cannot fetch cart products, response status:", response.status);
+    console.log(userId, "cannot fetch cart products, response status:", response.status);
 
     if (!response.ok) {
       const errText = await response.text();

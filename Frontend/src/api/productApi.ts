@@ -1,6 +1,6 @@
 import { localURL } from "@/localURL";
 import { getToken } from "../services/authStorage";
-import { ReactionRequest, ReactionResponse } from "../types/products";
+import { RatingResponse, ReactionRequest, ReactionResponse } from "../types/products";
 
 
  const BASE_URL = `${localURL}/api/products`;
@@ -42,7 +42,7 @@ export interface ProductResponse {
   reactions: number;
   views: number;
   purchases: number;
-  rating: number;
+  ratingData: RatingResponse;
 }
 
 export async function fetchWithTimeout(
@@ -248,6 +248,9 @@ export async function deleteProductByIdApi(id: string): Promise<void> {
     throw new Error("No token found");
   }
 
+  console.log("deleting product with id:", id);
+
+
   const response = await fetchWithTimeout(`${BASE_URL}?id=${id}`, {
     method: "DELETE",
     headers: {
@@ -256,6 +259,8 @@ export async function deleteProductByIdApi(id: string): Promise<void> {
   });
 
   const responseText = await response.text();
+
+  console.log("deleteProductByIdApi response:", responseText);
 
   if (!response.ok) {
     throw new Error(responseText || "Failed to delete product");
