@@ -7,11 +7,13 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.hivemarket.dto.Location;
 import com.hivemarket.service.CloudinaryService;
 import com.hivemarket.user.dto.UserData;
 import com.hivemarket.user.entity.User;
@@ -67,10 +69,17 @@ public class UserController {
 	   public ResponseEntity<?> profilePicture(
 			   @RequestParam MultipartFile profilePictures,
 			   @RequestParam String email,
-			   @RequestParam String location,
+			   @RequestParam String address,
+			   @RequestParam Double latitude,
+			   @RequestParam Double longitude,
 			   @RequestParam String university,
 			   @RequestParam String campus
 			   ) throws IOException{
+		   
+		   Location location = new Location();
+		   location.setAddress(address);
+		   location.setLatitude(latitude);
+		   location.setLongitude(longitude);
 		   
 		   String imageUrl = cloudinaryService.uploadProfilePicture(profilePictures);
 		   
@@ -107,6 +116,13 @@ public class UserController {
 		   
 		   return ResponseEntity.ok(user);
 		   
+	   }
+	   
+	   @PutMapping("/update/profile")
+	   public ResponseEntity<?> updateUserProfile(@RequestBody UserData userInfo) throws IOException{
+		
+		   System.out.println("This is the userInfo that need to be updated " + userInfo);		  // userService.getUserAndUpdate(userInfo);
+		   return ResponseEntity.ok(userService.getUserAndUpdate(userInfo));
 	   }
 	   
 	    

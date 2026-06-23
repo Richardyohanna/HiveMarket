@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -20,6 +21,8 @@ import com.hivemarket.reaction.entity.Reaction;
 import com.hivemarket.reaction.repository.ReactionRepository;
 import com.hivemarket.reaction.service.ReactionService;
 import com.hivemarket.service.CloudinaryService;
+import com.hivemarket.shop.entity.Shop;
+import com.hivemarket.shop.repository.ShopRepository;
 import com.hivemarket.user.entity.User;
 import com.hivemarket.user.repository.UserRepository;
 
@@ -36,6 +39,8 @@ public class ProductService {
     private final ReactionService reactionService;
     private final ReactionRepository reactionRepo;
     private final RatingService ratingService;
+    private final ShopRepository shopRepository;
+	
 
     private ProductResponse mapResponse(Product product) {
         List<String> imageUrls = product.getImages() == null
@@ -307,11 +312,85 @@ public class ProductService {
         return productResult;
     }
     
+    
+    
 
     @Transactional(readOnly = true)
     public List<ProductResponse> getAllProducts(UUID userId) {
     	
     	List<Product> products = productRepository.findAll();
+    	
+    	List<ProductResponse> productResult = new ArrayList<>();
+    	
+    	for(Product product: products) { // 08065805281
+    		
+    		Optional<Reaction> reaction = reactionRepo.findByProduct_IdAndUser_Id(product.getId(), userId);  //reactionService.findReactionData(product.getId(), userId);
+    		
+    		System.out.println("This is the reaction of this product when getting all product with userId " + reaction.toString());
+    	
+    		ProductResponse logicResponse = reaction.isEmpty() ? mapResponse(product, userId) : mapResponse(product, reaction.get(), userId); 
+    		 
+    		
+    		productResult.add(logicResponse);
+    	}
+    	
+        return productResult;
+    }
+    
+    @Transactional(readOnly = true)
+    public List<ProductResponse> getAllShopProducts(@NonNull UUID shopId) {
+    	
+    	Optional<Shop> shop = shopRepository.findById(shopId);
+    	
+    	List<Product> products = shop.get().getProducts();
+    	
+    	List<ProductResponse> productResult = new ArrayList<>();
+    	
+    	for(Product product: products) {
+    		
+    		 List<String> imageUrls =  product.getImages() == null
+                    ? new ArrayList<>()
+                            : product.getImages().stream().map(Image::getImageUrl).toList();
+
+    		
+    		ProductResponse response = new ProductResponse(
+                    product.getId(),
+                    product.getPName(),
+                    product.getPDetail(),
+                    product.getPAmount(),
+                    product.getPDiscount(),
+                    product.getPCondition(),
+                    product.getPQuantity(),
+                    product.getCategory(),
+                    product.getLocation(),
+                    product.getSeller() != null ? product.getSeller().getEmail() : null,
+                    product.getSeller() != null ? product.getSeller().getFull_name() : null,
+                    product.getSeller() != null ? product.getSeller().getId(): null,
+                    product.getSeller() != null ? product.getSeller().getProfile_picture() : null,
+                    product.getSeller() != null ? product.getSeller().getLocation() : null,
+                    product.getStatus(),
+                    imageUrls,
+                    product.getCreatedAt(),
+                    product.getReactions(),
+                    product.getViews(),
+                    product.getPurchases(),
+                    ratingService.getProductRating(product.getId()),
+                   	false
+            );
+    		
+    		productResult.add(response);
+    	}
+    	
+        return productResult;
+    }
+    
+    @Transactional(readOnly = true)
+    public List<ProductResponse> getAllShopProducts(UUID userId, @NonNull UUID shopId) {
+    	
+    	
+    	Optional<Shop> shop = shopRepository.findById(shopId);
+    	
+    	List<Product> products = shop.get().getProducts();
     	
     	List<ProductResponse> productResult = new ArrayList<>();
     	

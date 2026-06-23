@@ -341,6 +341,7 @@ trackPerformance('Render message list', () => {
  * ═══════════════════════════════════════════════════════════════════════════
  */
 
+/*
 export const QUICK_REFERENCE = \`
 INITIALIZATION:
   await initializeWebSocket(userId)
@@ -402,3 +403,4 @@ export default {
   MONITORING_EXAMPLE,
   QUICK_REFERENCE,
 };
+*/

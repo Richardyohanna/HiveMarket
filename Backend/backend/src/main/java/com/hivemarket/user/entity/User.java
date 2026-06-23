@@ -1,5 +1,6 @@
 package com.hivemarket.user.entity;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -8,6 +9,8 @@ import org.hibernate.annotations.BatchSize;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.hivemarket.cart.Entity.Cart;
+import com.hivemarket.dto.Location;
+import com.hivemarket.order.entity.Order;
 import com.hivemarket.product.Entity.Product;
 import com.hivemarket.product.comment.entity.Comment;
 import com.hivemarket.product.comment.entity.CommentLikes;
@@ -54,7 +57,7 @@ public class User {
     private String campus;
 
     @Column(name = "location")
-    private String location;
+    private Location location;
 
     @Column(name = "profile_picture")
     private String profile_picture;
@@ -111,8 +114,26 @@ public class User {
     @Builder.Default
     private List<Rating> rating = new ArrayList<>();
     
-    private boolean enabled;
+    @OneToMany(mappedBy = "user")
+    @ToString.Exclude
+    @JsonIgnore
+    @Builder.Default
+    private List<Order> order = new ArrayList<>();
     
+    @Column(name= "register_at")
+    private LocalDateTime registerAt;
+    
+    private boolean enabled;
+
+	/*
+	 * @Column(nullable = false)
+	 * 
+	 * @Builder.Default private boolean isSeller = false;
+	 */
+
+    @Column(unique = true)
+    private java.util.UUID walletId;
+
     @Version
     private Long version;
 }

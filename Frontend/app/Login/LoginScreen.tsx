@@ -173,6 +173,7 @@ const LoginScreen = () => {
     setGender,
     setRole,
     setUserId,
+    setIsSeller
   } = userStore();
 
   
@@ -212,6 +213,14 @@ const LoginScreen = () => {
 
             if (data.role) setRole(data.role);
 
+            if(data.role == "Student") {
+
+              setIsSeller(false)
+            } else if(data.role == "Seller") {
+              setIsSeller(true)
+            }
+
+            console.log("This is the userData ", data);
             //THis will exit the connections if the user data.id is null
             if(data.id == null ) return;
 

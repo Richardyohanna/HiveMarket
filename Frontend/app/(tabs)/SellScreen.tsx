@@ -622,6 +622,7 @@ export default SellScreen;
 
 const styles = StyleSheet.create({
   header: {
+    paddingTop: 50,
     flexDirection: "row", alignItems: "center", justifyContent: "space-between",
     paddingHorizontal: 14, paddingVertical: 12, borderBottomWidth: 1,
   },

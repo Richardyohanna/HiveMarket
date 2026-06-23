@@ -209,6 +209,33 @@ export async function getAllProductsApi(userId: string | null): Promise<ProductR
   }));
 }
 
+export async function getAllShopProductsApi(userId: string | null, shopId: string | null): Promise<ProductResponse[]> {
+  
+  console.log("Fetching products for userId:", shopId);
+  
+  const response = await fetchWithTimeout(`${BASE_URL}/shop/all?userId=${userId}&shopId=${shopId}`, {
+    method: "GET",
+    headers: {
+      Accept: "application/json",
+    },
+  });
+
+  const data = await response.json();
+
+  console.log("getAllProductsApi response with userID present " + shopId + " : ", data);
+  if (!response.ok) {
+    throw new Error("Failed to fetch products");
+  }
+
+  return data.map((p: any) => ({
+    ...p,
+    views: p.views ?? 0,
+    purchases: p.purchases ?? 0,
+    rating: p.rating ?? 0,
+  }));
+}
+
+
 export async function increaseProductPurchaseApi(id: string) {
   const token = await getToken();
 

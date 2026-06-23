@@ -1,9 +1,13 @@
 package com.hivemarket.payment.service;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.hivemarket.payment.config.PaystackConfig;
 import com.hivemarket.payment.dto.CardChargeRequest;
 import com.hivemarket.payment.dto.PaystackInitializeResponse;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
+import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
@@ -11,21 +15,20 @@ import org.springframework.web.client.RestTemplate;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class PaystackServiceImpl implements PaystackService {
 
     private final RestTemplate restTemplate;
-
-    @Value("${paystack.secret.key}")
-    private String paystackSecretKey;
-
-    @Value("${paystack.base.url}")
-    private String paystackBaseUrl;
-
+    private final PaystackConfig paystackConfig;
+    private final ObjectMapper objectMapper; 
+    
     @Override
     public PaystackInitializeResponse initializeTransaction(
             String email,
@@ -35,7 +38,7 @@ public class PaystackServiceImpl implements PaystackService {
             Map<String, Object> metadata
     ) {
         HttpHeaders headers = new HttpHeaders();
-        headers.setBearerAuth(paystackSecretKey);
+        headers.setBearerAuth(paystackConfig.getSecretKeyTest());
         headers.setContentType(MediaType.APPLICATION_JSON);
 
         Map<String, Object> payload = new HashMap<>();
@@ -48,8 +51,16 @@ public class PaystackServiceImpl implements PaystackService {
 
         HttpEntity<Map<String, Object>> entity = new HttpEntity<>(payload, headers);
 
+        System.out.println("Base URL = " + paystackConfig.getBaseUrl());
+        System.out.println("Secret Key = " + paystackConfig.getSecretKeyTest());
+        System.out.println(
+                "Full URL = " +
+                paystackConfig.getBaseUrl() + "/transaction/initialize"
+        );
+        
+        
         ResponseEntity<PaystackInitializeResponse> response = restTemplate.exchange(
-                paystackBaseUrl + "/transaction/initialize",
+                paystackConfig.getBaseUrl() + "/transaction/initialize",
                 HttpMethod.POST,
                 entity,
                 PaystackInitializeResponse.class
@@ -65,12 +76,12 @@ public class PaystackServiceImpl implements PaystackService {
     @Override
     public Map<String, Object> verifyTransaction(String reference) {
         HttpHeaders headers = new HttpHeaders();
-        headers.setBearerAuth(paystackSecretKey);
+        headers.setBearerAuth(paystackConfig.getSecretKeyTest());
 
         HttpEntity<Void> entity = new HttpEntity<>(headers);
 
         ResponseEntity<Map<String, Object>> response = restTemplate.exchange(
-                paystackBaseUrl + "/transaction/verify/" + reference,
+                paystackConfig.getBaseUrl() + "/transaction/verify/" + reference,
                 HttpMethod.GET,
                 entity,
                 new ParameterizedTypeReference<>() {}
@@ -88,7 +99,7 @@ public class PaystackServiceImpl implements PaystackService {
 
         HttpHeaders headers = new HttpHeaders();
 
-        headers.setBearerAuth(paystackSecretKey);
+        headers.setBearerAuth(paystackConfig.getSecretKeyTest());
 
         headers.setContentType(MediaType.APPLICATION_JSON);
 
@@ -117,7 +128,7 @@ public class PaystackServiceImpl implements PaystackService {
 
         ResponseEntity<Map<String, Object>> response =
                 restTemplate.exchange(
-                        paystackBaseUrl + "/charge",
+                        paystackConfig.getBaseUrl() + "/charge",
                         HttpMethod.POST,
                         entity,
                         new ParameterizedTypeReference<>() {}
@@ -134,7 +145,7 @@ public class PaystackServiceImpl implements PaystackService {
 
         HttpHeaders headers = new HttpHeaders();
 
-        headers.setBearerAuth(paystackSecretKey);
+        headers.setBearerAuth(paystackConfig.getSecretKeyTest());
 
         headers.setContentType(MediaType.APPLICATION_JSON);
 
@@ -149,7 +160,7 @@ public class PaystackServiceImpl implements PaystackService {
 
         ResponseEntity<Map<String, Object>> response =
                 restTemplate.exchange(
-                        paystackBaseUrl + "/charge/submit_pin",
+                        paystackConfig.getBaseUrl() + "/charge/submit_pin",
                         HttpMethod.POST,
                         entity,
                         new ParameterizedTypeReference<>() {}
@@ -166,7 +177,7 @@ public class PaystackServiceImpl implements PaystackService {
 
         HttpHeaders headers = new HttpHeaders();
 
-        headers.setBearerAuth(paystackSecretKey);
+        headers.setBearerAuth(paystackConfig.getSecretKeyTest());
 
         headers.setContentType(MediaType.APPLICATION_JSON);
 
@@ -181,7 +192,7 @@ public class PaystackServiceImpl implements PaystackService {
 
         ResponseEntity<Map<String, Object>> response =
                 restTemplate.exchange(
-                        paystackBaseUrl + "/charge/submit_otp",
+                        paystackConfig.getBaseUrl() + "/charge/submit_otp",
                         HttpMethod.POST,
                         entity,
                         new ParameterizedTypeReference<>() {}
@@ -192,44 +203,44 @@ public class PaystackServiceImpl implements PaystackService {
 
 	@Override
 	public Map<String, Object> chargeBankTransfer(String email, Long amount, String reference) {
-		// TODO Auto-generated method stub
-		   String url = paystackBaseUrl + "/charge";
+		String url = paystackConfig.getBaseUrl() + "/charge";
 
-		    HttpHeaders headers = new HttpHeaders();
-		    headers.setContentType(MediaType.APPLICATION_JSON);
-		    headers.setBearerAuth(paystackSecretKey);
+	    HttpHeaders headers = new HttpHeaders();
+	    headers.setContentType(MediaType.APPLICATION_JSON);
+	    headers.setBearerAuth(paystackConfig.getSecretKeyTest());
 
-		    Map<String, Object> payload = new HashMap<>();
+	    Map<String, Object> payload = new HashMap<>();
 
-		    payload.put("email", email);
-		    payload.put("amount", amount);
-		    payload.put("reference", reference);
+	    payload.put("email", email);
+	    payload.put("amount", amount);
+	    payload.put("reference", reference);
 
-		    // THIS enables virtual account transfer
-		    Map<String, Object> bankTransfer = new HashMap<>();
-		    bankTransfer.put(
-		            "account_expires_at",
-		            LocalDateTime.now()
-		                    .plusMinutes(30)
-		                    .toString()
-		    );
+	    Map<String, Object> bankTransfer = new HashMap<>();
+	    bankTransfer.put(
+	            "account_expires_at",
+	            LocalDateTime.now()
+	                    .plusMinutes(30)
+	                    .toString()
+	    );
 
-		    payload.put("bank_transfer", bankTransfer);
+	    payload.put("bank_transfer", bankTransfer);
 
-		    System.out.println("PAYSTACK PAYLOAD => " + payload);
+	    System.out.println("PAYSTACK PAYLOAD => " + payload);
 
-		    HttpEntity<Map<String, Object>> entity =
-		            new HttpEntity<>(payload, headers);
+	    HttpEntity<Map<String, Object>> entity =
+	            new HttpEntity<>(payload, headers);
 
-		    ResponseEntity<Map> response = restTemplate.exchange(
-		            url,
-		            HttpMethod.POST,
-		            entity,
-		            Map.class
-		    );
+	    ResponseEntity<Map> response = restTemplate.exchange(
+	            url,
+	            HttpMethod.POST,
+	            entity,
+	            Map.class
+	    );
 
-		    return response.getBody();
+	    return response.getBody();
 	}
+
+
 
 
 }

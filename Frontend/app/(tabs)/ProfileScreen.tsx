@@ -1,29 +1,21 @@
 /**
  * ProfileScreen — Hook-safe implementation
  *
- * THE ROOT CAUSE (finally confirmed):
- * ─────────────────────────────────────
- * `userStore` is a custom hook that calls `useCallback` internally.
- * Every time it's called inside a component, it adds 2+ extra hooks
- * (useCallback, possibly useState) to the component's hook list.
- * When the store's internal state changes (e.g. after login data loads),
- * those internal hooks fire in a different order → "change in hook order".
+ * Seller vs non-seller differences:
+ * ─────────────────────────────────
+ * • Non-sellers: only "Settings" tab is shown. Active/Sold tabs are hidden.
+ * • Non-sellers: SellerWalletSection is not rendered.
+ * • SettingsTab receives `isSeller` so it can show/hide "Wallet & Payouts".
  *
- * THE DEFINITIVE FIX:
- * ────────────────────
- * Do NOT call `userStore()` as a hook at all.
- * Read user data via `userStore.getState()` — this is a plain function
- * call, not a hook, so it adds ZERO entries to React's hook registry.
- *
- * We then use a single `useSyncExternalStore` subscription (via
- * `useProductStore`) to re-render when listings change, and a
- * `useState` counter to force re-render when user data changes.
+ * Hook count stays constant across all renders — tab list derivation is
+ * done outside the JSX so no conditional hook calls are introduced.
  */
 
 import ProductListingsTab from '@/components/ProductListingsTab';
 import SettingsTab from '@/components/SettingsTab';
 import SoldListingTab from '@/components/SoldListingTab';
 import { Colors } from '@/constants/theme';
+import { SellerWalletSection } from '@/src/components/SellerWalletSection';
 import { useProducts } from '@/src/hooks/useProducts';
 import { removeToken } from '@/src/services/authStorage';
 import { userStore } from '@/src/store/userStore';
@@ -45,38 +37,45 @@ const PRIMARY_SOFT = "#e8f5e9";
 const PRIMARY_DARK = "#1a3a1a";
 
 type Tab = "listings" | "sold" | "settings";
-const TAB_LABELS: Record<Tab, string> = { listings: "Active", sold: "Sold",  settings: "Settings" };
-const TAB_ICONS:  Record<Tab, string> = { listings: "🛍️",    sold: "📦",    settings: "⚙️"      };
+
+const ALL_TAB_LABELS: Record<Tab, string> = { listings: "Active", sold: "Sold", settings: "Settings" };
+const ALL_TAB_ICONS:  Record<Tab, string> = { listings: "🛍️",    sold: "📦",   settings: "⚙️"      };
+
+// Tabs available to sellers vs non-sellers
+const SELLER_TABS:     Tab[] = ["listings", "sold", "settings"];
+const NON_SELLER_TABS: Tab[] = ["settings"];
 
 const ProfileScreen = () => {
   // ── FIXED hook list — identical count on every single render ─────────────
 
-  const scheme = useColorScheme();                                          // H1 (stable)
-  const isDark = scheme === "dark";
-  const theme  = isDark ? Colors.dark : Colors.light;
+  const scheme  = useColorScheme();                         // H1
+  const isDark  = scheme === "dark";
+  const theme   = isDark ? Colors.dark : Colors.light;
 
   const user = userStore.getState();
+  const {
+      profile_picture,
+      full_name,
+      university,
+      campus,
+      email,
+      gender,
+      isSeller,
+    } = user; 
 
-  // H2 — Subscribe to productStore (standard Zustand, safe)
 
-  const {products: recentListings} = useProducts(user.id)
-  //const recentListings = useProductStore((s) => s.recentListings);
+  const { products: recentListings } = useProducts(user.id); // H2
 
-  // H3 — Tab state
-  const [activeTab, setActiveTab] = useState<Tab>("listings");
+  // H3 — Tab state (always starts on the first available tab per role)
+  const [activeTab, setActiveTab] = useState<Tab>(
+    user.isSeller ? "listings" : "settings"
+  );
 
-  // H4 — Re-render trigger when user data loads (avoids calling userStore as hook)
+  // H4 — Re-render trigger when user data loads
   const [, forceUpdate] = useState(0);
 
-  // ── Read user data via getState() — ZERO hooks, plain function call ──────
-  // This never affects the hook count. We subscribe manually below.
-  
-
   // H5 — Subscribe to userStore changes without calling it as a hook
-  // When the store changes, we increment the counter to trigger a re-render,
-  // then re-read via getState() above on the next render.
-  useEffect(() => {                                                          // H5
-    // userStore.subscribe exists on all Zustand stores
+  useEffect(() => {                                          // H5
     const unsub = (userStore as any).subscribe(() => {
       forceUpdate((n) => n + 1);
     });
@@ -84,14 +83,14 @@ const ProfileScreen = () => {
   }, []);
 
   // H6, H7 — Derived data
-  const myListings = useMemo(                                               // H6
+  const myListings = useMemo(                               // H6
     () => recentListings.filter(
       (item) => item.sellerEmail === user.email && item.pStatus !== "SOLD"
     ),
     [recentListings, user.email]
   );
 
-  const mySold = useMemo(                                                   // H7
+  const mySold = useMemo(                                   // H7
     () => recentListings.filter(
       (item) => item.sellerEmail === user.email && item.pStatus === "SOLD"
     ),
@@ -99,44 +98,32 @@ const ProfileScreen = () => {
   );
 
   // H8, H9 — Callbacks
-  const handleLogout = useCallback(() => {                                  // H8
+  const handleLogout = useCallback(() => {                  // H8
     Alert.alert("Log Out", "Are you sure you want to log out?", [
-      { text: "Cancel",  style: "cancel" },
-      { text: "Log Out", style: "destructive", onPress: async () => {
-        
-        await removeToken();           // ✅ remove token
-
-        userStore.getState().clearUser();
-
-           // ✅ clear user data from store
-        router.replace("/Login/LoginScreen"); // ✅ redirect
-        
-        
-      }, },
-
-
-
-      
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Log Out", style: "destructive", onPress: async () => {
+          await removeToken();
+          userStore.getState().clearUser();
+          router.replace("/Login/LoginScreen");
+        },
+      },
     ]);
-
-
   }, []);
 
-  const onProductPressed = useCallback((id: string) => {                   // H9
+  const onProductPressed = useCallback((id: string) => {   // H9
     router.push({ pathname: "/ProductDetail/ProductDetail", params: { id } });
   }, []);
 
   // ── No more hooks below ───────────────────────────────────────────────────
 
-  const {
-    profile_picture,
-    full_name,
-    university,
-    campus,
-    email,
-    gender,
-   
-  } = user;
+  
+ 
+
+
+
+  // Derive which tabs to show based on seller status (plain value, not a hook)
+  const visibleTabs: Tab[] = isSeller ? SELLER_TABS : NON_SELLER_TABS;
 
   const avatarSource = profile_picture
     ? { uri: profile_picture }
@@ -144,37 +131,20 @@ const ProfileScreen = () => {
       ? require("@/assets/images/CreateAccount/femaleUser.png")
       : require("@/assets/images/CreateAccount/user.png");
 
+  const onBack = () => router.back();
 
-  const onBack = () => {
-
-    router.back();
-  }
   return (
     <View style={[styles.screen, { backgroundColor: theme.screenBackground, paddingTop: 25 }]}>
 
       {/* ── Navbar ── */}
       <View style={[styles.navbar, { borderColor: isDark ? PRIMARY_DARK : "#e4f0e4" }]}>
-        <Pressable 
-          onPress={onBack}         
-          hitSlop={12}
-        >
-           
-        {/*<Image
-            source={require("../../assets/images/ProductDetail/back.png")}
-            style={[styles.navIcon, { tintColor: PRIMARY }]}
-          /> */}
-
-          <Text style={{ fontSize: 30, color: theme.text, fontWeight: "700" }} > ← </Text>
+        <Pressable onPress={onBack} hitSlop={12}>
+          <Text style={{ fontSize: 30, color: theme.text, fontWeight: "700" }}>←</Text>
         </Pressable>
-        <Text style={[styles.navTitle, { color: theme.text, textAlign: "center", alignSelf: "center"}]}>My Profile</Text>
-        <Pressable
-          style={[styles.navShare]}// { backgroundColor: isDark ? PRIMARY_DARK : PRIMARY_SOFT }]}
-          hitSlop={12}
-        >
-          {/*<Image
-            source={require("../../assets/images/Profile/share.png")}
-            style={[styles.navIcon, { tintColor: PRIMARY }]}
-          /> */}
+        <Text style={[styles.navTitle, { color: theme.text, textAlign: "center", alignSelf: "center" }]}>
+          My Profile
+        </Text>
+        <Pressable style={styles.navShare} hitSlop={12}>
           <Text style={{ fontSize: 30, color: theme.text }}>➦</Text>
         </Pressable>
       </View>
@@ -213,13 +183,23 @@ const ProfileScreen = () => {
           </Text>
         </View>
 
+        {/* ── Seller Wallet Section — sellers only ── */}
+        {isSeller && (
+          <SellerWalletSection userId={user.id} isDark={isDark} theme={theme} />
+        )}
+
         {/* ── Stats ── */}
-        <View style={styles.statsRow}>
+        {isSeller && ( <View style={styles.statsRow}>
           {[
-            { label: "Listed",  value: myListings.length, icon: "🛍️" },
-            { label: "Sold",    value: mySold.length,      icon: "📦" },
-            { label: "Rating",  value: "4.9",              icon: "⭐" },
-            { label: "Reviews", value: 12,                 icon: "💬" },
+            // Non-sellers only see Settings, so listing/sold counts are seller-only
+            ...(isSeller
+              ? [
+                  { label: "Listed", value: myListings.length, icon: "🛍️" },
+                  { label: "Sold",   value: mySold.length,     icon: "📦" },
+                ]
+              : []),
+            { label: "Rating",  value: "4.9", icon: "⭐" },
+            { label: "Reviews", value: 12,    icon: "💬" },
           ].map((stat) => (
             <View
               key={stat.label}
@@ -233,57 +213,41 @@ const ProfileScreen = () => {
               <Text style={[styles.statLabel, { color: theme.readColor }]}>{stat.label}</Text>
             </View>
           ))}
-        </View>
+        </View> )}
 
-        {/* ── Quick actions ── */}
-        <View style={styles.quickRow}>
-          <Pressable
-            style={[styles.quickBtn, { backgroundColor: PRIMARY }]}
-            onPress={() => router.push("/SellScreen")}
-          >
-            <Text style={styles.quickBtnIcon}>➕</Text>
-            <Text style={styles.quickBtnText}>Sell Item</Text>
-          </Pressable>
-          <Pressable
-            style={[styles.quickBtn, {
-              backgroundColor: isDark ? PRIMARY_DARK : PRIMARY_SOFT,
-              borderWidth: 1, borderColor: PRIMARY,
-            }]}
-            onPress={() => router.push("/ChatScreen/ChatScreen")}
-          >
-            <Text style={styles.quickBtnIcon}>💬</Text>
-            <Text style={[styles.quickBtnText, { color: PRIMARY }]}>Messages</Text>
-          </Pressable>
-        </View>
 
-        {/* ── Tab bar ── */}
-        <View style={[styles.tabBar, {
-          backgroundColor: theme.sectionBackground,
-          borderColor: isDark ? PRIMARY_DARK : "#e4f0e4",
-        }]}>
-          {(Object.keys(TAB_LABELS) as Tab[]).map((tab) => {
-            const isActive = activeTab === tab;
-            return (
-              <Pressable
-                key={tab}
-                onPress={() => setActiveTab(tab)}
-                style={[styles.tabItem, isActive && styles.tabItemActive]}
-              >
-                <Text style={styles.tabIcon}>{TAB_ICONS[tab]}</Text>
-                <Text style={[styles.tabLabel, {
-                  color: isActive ? PRIMARY : theme.readColor,
-                  fontWeight: isActive ? "800" : "400",
-                }]}>
-                  {TAB_LABELS[tab]}
-                </Text>
-              </Pressable>
-            );
-          })}
-        </View>
+        {/* ── Tab bar — only rendered when more than one tab is available ── */}
+        {visibleTabs.length > 1 && (
+          <View style={[styles.tabBar, {
+            backgroundColor: theme.sectionBackground,
+            borderColor: isDark ? PRIMARY_DARK : "#e4f0e4",
+          }]}>
+            {visibleTabs.map((tab) => {
+              const isActive = activeTab === tab;
+              return (
+                <Pressable
+                  key={tab}
+                  onPress={() => setActiveTab(tab)}
+                  style={[styles.tabItem, isActive && styles.tabItemActive]}
+                >
+                  <Text style={styles.tabIcon}>{ALL_TAB_ICONS[tab]}</Text>
+                  <Text style={[styles.tabLabel, {
+                    color: isActive ? PRIMARY : theme.readColor,
+                    fontWeight: isActive ? "800" : "400",
+                  }]}>
+                    {ALL_TAB_LABELS[tab]}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </View>
+        )}
 
         {/*
           All three panels always rendered — display:none hides inactive ones.
           This keeps the React tree shape constant so hook counts never change.
+          For non-sellers, listings/sold panels are hidden by both display:none
+          AND by the fact that activeTab can never be "listings" or "sold".
         */}
         <View style={activeTab !== "listings" ? styles.hidden : undefined}>
           <ProductListingsTab
@@ -306,9 +270,10 @@ const ProfileScreen = () => {
 
         <View style={activeTab !== "settings" ? styles.hidden : undefined}>
           <SettingsTab
-            handleLogout={()=> { handleLogout();}}
+            handleLogout={() => { handleLogout(); }}
             isDark={isDark}
             theme={theme}
+            isSeller={isSeller}
           />
         </View>
 
@@ -366,7 +331,7 @@ const styles = StyleSheet.create({
 
   quickRow: { flexDirection: "row", marginHorizontal: 14, marginTop: 14, gap: 10 },
   quickBtn: {
-    flex: 1, height: 46, borderRadius: 13,
+    height: 46, borderRadius: 13,
     flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 7,
   },
   quickBtnIcon: { fontSize: 15 },

@@ -2,8 +2,10 @@ import { Colors, FontSize } from '@/constants/theme';
 import { uploadProfilePicture } from '@/src/api/userApi';
 import { userStore } from '@/src/store/userStore';
 import * as ImagePicker from 'expo-image-picker';
+import * as Location from 'expo-location';
 import { router } from 'expo-router';
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+
 import {
   Alert,
   Animated,
@@ -95,13 +97,23 @@ const ProfileInfo = () => {
   const themeSize = FontSize.size;
 
   const [profilePicture, setProfilePicture] = useState("");
-  const [location,       setLocation]       = useState("");
+  const [address,       setAddress]       = useState("");
+  const [location,       setLocation]       = useState<any>({});
   const [university,     setUniversity]     = useState("");
   const [campus,         setCampus]         = useState("");
   const [loading,        setLoading]        = useState(false);
+  const [longitude, setLongitude] = useState(0);
+  const [latitude, setLatitude] = useState(0);
 
   // Avatar ring pulse animation
   const ringAnim = useRef(new Animated.Value(1)).current;
+ 
+  useEffect(()=> {
+
+    getCurrentLocation();
+
+  }, [])
+
   const pulseRing = () => {
     Animated.sequence([
       Animated.timing(ringAnim, { toValue: 1.08, duration: 180, useNativeDriver: true }),
@@ -116,7 +128,7 @@ const ProfileInfo = () => {
 
   const filledCount = [
     !!profilePicture,
-    location.trim().length > 0,
+    address.trim().length > 0,
     university.trim().length > 0,
     campus.trim().length > 0,
   ].filter(Boolean).length;
@@ -144,19 +156,54 @@ const ProfileInfo = () => {
   };
 
   const onDoneClick = () => {
-    if (!location.trim())   { Alert.alert("Validation Error", "Please enter your location.");   return; }
+    if (!address.trim())   { Alert.alert("Validation Error", "Please enter your location.");   return; }
     if (!university.trim()) { Alert.alert("Validation Error", "Please enter your university."); return; }
     if (!campus.trim())     { Alert.alert("Validation Error", "Please enter your campus.");     return; }
 
     setLoading(true);
-    uploadProfilePicture(email, profilePicture, location, university, campus)
+
+    const Data = {
+      address: address,
+      latitude: latitude,
+      longitude: longitude
+
+    }
+
+    setLocation(Data);
+
+    console.log("This is the location", location, " here's the data" , Data);
+
+    uploadProfilePicture(email, profilePicture, Data, university, campus)
       .then(() => {
         setLoading(false);
         router.replace("/Login/LoginScreen");
       });
   };
 
-  const isReady = location.trim() && university.trim() && campus.trim();
+ 
+
+const getCurrentLocation = async () => {
+
+    const { status } =
+        await Location.requestForegroundPermissionsAsync();
+
+    if (status !== 'granted') {
+        Alert.alert("Location permission denied");
+        return;
+    }
+
+    const current =
+        await Location.getCurrentPositionAsync({});
+
+    setLatitude(current.coords.latitude);
+    setLongitude(current.coords.longitude);
+
+    
+    console.log(current.coords.latitude);
+    console.log(current.coords.longitude);
+};
+
+  const isReady = address.trim() && university.trim() && campus.trim();
 
   return (
     <View style={[s.root, { backgroundColor: isDark ? DARK_BG : "#f4faf4" , paddingTop: 25}]}>
@@ -269,8 +316,8 @@ const ProfileInfo = () => {
                 <Field
                   label="Location"
                   placeholder="e.g. Lagos, Nigeria"
-                  value={location}
-                  onChangeText={setLocation}
+                  value={address}
+                  onChangeText={(data) => {setAddress(data); }}
                   icon="📍"
                   isDark={isDark}
                 />

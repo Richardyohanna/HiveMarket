@@ -11,14 +11,10 @@ public class TransactionMapper {
     public TransactionHistoryResponse toHistoryResponse(Transaction transaction) {
         return new TransactionHistoryResponse(
                 transaction.getId(),
-                transaction.getProductId(),
                 transaction.getReference(),
                 transaction.getAmount(),
                 transaction.getStatus().name(),
-                null,
-                null,
-                transaction.getCreatedAt(),
-                transaction.getPaidAt()
+                transaction.getCreatedAt()
         );
     }
 

@@ -1,5 +1,7 @@
 package com.hivemarket.user.service;
 
+import java.time.LocalDateTime;
+
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -28,6 +30,7 @@ public class AuthService {
 				.full_name(request.fullName())
 				.email(request.email())
 				.password(passwordEncoder.encode(request.password()))
+				.registerAt(LocalDateTime.now())
 				.enabled(true)
 				.build();
 				

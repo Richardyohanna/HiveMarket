@@ -91,13 +91,14 @@ export default function ChatDetailScreen() {
   const theme  = isDark ? Colors.dark : Colors.light;
 
   const user = userStore.getState(); // get the current logged-in user's data
-  const { id, buyerId, sellerId, fullName, online, avatar } = useLocalSearchParams<{
+  const { id, buyerId, sellerId, fullName, online, avatar, activeTab } = useLocalSearchParams<{
     id: string;
     buyerId: string;
     sellerId: string;
     fullName: string;
     online: string;
     avatar?: string;
+    activeTab: string;
   }>();
 
   const isOnline = online === "true";
@@ -259,6 +260,17 @@ export default function ChatDetailScreen() {
     console.log("line 187/ [id].tsx : => Attempting to send message:" );
     if (!text) return;
 
+    const tempId = `temp-${Date.now()}`;
+
+   const OptimisticMessage: UIMessage = {
+      id:    tempId,  
+      text:    text,
+      sent:    true,
+      time:    tempId
+   };
+
+   //setUiMessages((prev) => [OptimisticMessage, ...prev]);
+
     // Determine correct buyerId/sellerId direction
     const isBuyer  = currentUserId === buyerId;
     const reqBuyer  = isBuyer ? buyerId : sellerId;
@@ -375,7 +387,7 @@ export default function ChatDetailScreen() {
         backgroundColor: theme.background,
         borderColor: isDark ? PRIMARY_DARK : "#e4f0e4",
       }]}>
-        <Pressable onPress={() => router.push("/ChatScreen")} hitSlop={12} style={styles.backBtn}>
+        <Pressable onPress={() => router.back()} hitSlop={12} style={styles.backBtn}>
           <Text style={[styles.backArrow, { color: theme.text }]}>‹</Text>
         </Pressable>
 

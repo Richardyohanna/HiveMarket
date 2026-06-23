@@ -1,1 +1,1 @@
-export const localURL = "http://192.168.0.133:8080"; //"https://hivemarket.onrender.com http://172.20.10.2:8080";
+export const localURL = "http://172.20.10.2:8080"; //"https://hivemarket.onrender.com http://172.20.10.2:8080";

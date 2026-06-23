@@ -2,7 +2,7 @@ package com.hivemarket.product.DTO;
 
 import java.math.BigDecimal;
 
-
+import com.hivemarket.dto.Location;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -16,7 +16,7 @@ public record CreateProduct(
         @NotBlank String pCondition,
         @NotNull Integer pQuantity,
         @NotBlank String category,
-        @NotBlank String location,
+        @NotBlank Location location,
         String sellerName,
         String sellerImage,
         String sellerEmail

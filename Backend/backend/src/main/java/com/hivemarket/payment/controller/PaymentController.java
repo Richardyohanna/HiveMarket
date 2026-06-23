@@ -2,6 +2,7 @@ package com.hivemarket.payment.controller;
 
 import com.hivemarket.payment.dto.BankTransferRequest;
 import com.hivemarket.payment.dto.CardChargeRequest;
+import com.hivemarket.payment.dto.ConfirmPaymentRequest;
 import com.hivemarket.payment.dto.InitializePaymentRequest;
 import com.hivemarket.payment.dto.InitializePaymentResponse;
 import com.hivemarket.payment.dto.SubmitOtpRequest;
@@ -9,12 +10,17 @@ import com.hivemarket.payment.dto.SubmitPinRequest;
 import com.hivemarket.payment.dto.TransactionDetailResponse;
 import com.hivemarket.payment.dto.TransactionHistoryResponse;
 import com.hivemarket.payment.dto.VerifyPaymentResponse;
+import com.hivemarket.payment.service.PaymentConfirmationService;
 import com.hivemarket.payment.service.PaymentService;
+import com.hivemarket.payment.service.PaystackService;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/payments")
@@ -22,6 +28,27 @@ import java.util.List;
 public class PaymentController {
 
     private final PaymentService paymentService;
+    private final PaymentConfirmationService paymentConfirmationService;
+
+    @PostMapping("/confirm")
+    public ResponseEntity<?> confirmPayment(
+            @RequestBody ConfirmPaymentRequest request
+    ) {
+
+        paymentConfirmationService.confirmPayment(
+                request.getProductId(),
+                request.getBuyerId(),
+                request.getSellerId(),
+                request.getReference()
+        );
+
+        return ResponseEntity.ok(
+                Map.of(
+                        "success", true,
+                        "message", "Payment confirmed"
+                )
+        );
+    }
 
     @PostMapping("/initialize")
     public ResponseEntity<InitializePaymentResponse> initializePayment(
@@ -40,11 +67,23 @@ public class PaymentController {
         return ResponseEntity.ok(paymentService.verifyPayment(reference));
     }
 
-    @GetMapping("/history/{buyerId}")
+    @GetMapping("/history/buyer/{buyerId}")
     public ResponseEntity<List<TransactionHistoryResponse>> getBuyerTransactions(
-            @PathVariable Long buyerId
+            @PathVariable String buyerId
     ) {
-        return ResponseEntity.ok(paymentService.getBuyerTransactions(buyerId));
+        UUID buyerUUID = UUID.fromString(buyerId);
+        return ResponseEntity.ok(paymentService.getBuyerTransactions(Long.valueOf(buyerUUID.toString())));
+    }
+
+    @GetMapping("/history/seller/{sellerId}")
+    public ResponseEntity<List<TransactionHistoryResponse>> getSellerTransactions(
+            @PathVariable String sellerId
+    ) {
+        // Cast to get the service with the extended method
+        com.hivemarket.payment.service.PaymentServiceImpl paymentServiceImpl = 
+            (com.hivemarket.payment.service.PaymentServiceImpl) paymentService;
+        UUID sellerUUID = UUID.fromString(sellerId);
+        return ResponseEntity.ok(paymentServiceImpl.getSellerTransactions(sellerUUID));
     }
 
     @GetMapping("/transaction/{reference}")
@@ -104,4 +143,5 @@ public class PaymentController {
                 )
         );
     }
+    
 }

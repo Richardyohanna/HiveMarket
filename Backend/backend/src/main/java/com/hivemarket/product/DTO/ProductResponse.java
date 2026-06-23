@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
+import com.hivemarket.dto.Location;
 import com.hivemarket.product.rating.dto.RatingResponse;
 
 public record ProductResponse(
@@ -16,12 +17,12 @@ public record ProductResponse(
     String pCondition,
     Integer pQuantity,
     String category,
-    String location,
+    Location location,
     String sellerEmail,
     String sellerName,
     UUID sellerId,
     String sellerProfilePicture,
-    String sellerLocation,
+   	Location sellerLocation,
     String status,
     List<String> imageUrls,
     LocalDateTime createdAt,

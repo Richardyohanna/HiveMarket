@@ -15,9 +15,10 @@ import {
 const PRIMARY      = "#008100";
 const PRIMARY_SOFT = "#e8f5e9";
 const PRIMARY_DARK = "#1a3a1a";
+const DANGER       = "#e53935";
 
-// ── Notification data shape ───────────────────────────────────────────────────
-type NotifType = "message" | "price" | "live" | "sold" | "reaction" | "system";
+// ── Extended Notification Types for Campus Marketplace ────────────────────────
+type NotifType = "message" | "price" | "live" | "sold" | "reaction" | "system" | "payment_received";
 
 interface Notification {
   id: string;
@@ -27,58 +28,60 @@ interface Notification {
   time: string;
   read: boolean;
   group: "today" | "yesterday" | "earlier";
+  metadata?: {
+    productId?: string;
+    productName?: string;
+    senderName?: string;
+  };
 }
 
 const ICON_MAP: Record<NotifType, { emoji: string; color: string; bg: string; bgDark: string }> = {
-  message:  { emoji: "💬", color: "#3b82f6", bg: "#eff6ff",  bgDark: "#0f1a2a" },
-  price:    { emoji: "🏷️", color: "#f59e0b", bg: "#fffbeb",  bgDark: "#1a1400" },
-  live:     { emoji: "🟢", color: PRIMARY,   bg: PRIMARY_SOFT, bgDark: PRIMARY_DARK },
-  sold:     { emoji: "🎉", color: "#8b5cf6", bg: "#f5f3ff",  bgDark: "#1a1030" },
-  reaction: { emoji: "❤️", color: "#ef4444", bg: "#fef2f2",  bgDark: "#1a0a0a" },
-  system:   { emoji: "🐝", color: PRIMARY,   bg: PRIMARY_SOFT, bgDark: PRIMARY_DARK },
+  message:          { emoji: "💬", color: "#3b82f6", bg: "#eff6ff",   bgDark: "#0f1a2a" },
+  price:            { emoji: "🏷️", color: "#f59e0b", bg: "#fffbeb",   bgDark: "#1a1400" },
+  live:             { emoji: "🚀", color: PRIMARY,   bg: PRIMARY_SOFT, bgDark: PRIMARY_DARK },
+  sold:             { emoji: "🎉", color: "#8b5cf6", bg: "#f5f3ff",   bgDark: "#1a1030" },
+  reaction:         { emoji: "❤️", color: "#ef4444", bg: "#fef2f2",   bgDark: "#1a0a0a" },
+  system:           { emoji: "🐝", color: PRIMARY,   bg: PRIMARY_SOFT, bgDark: PRIMARY_DARK },
+  payment_received: { emoji: "💰", color: "#10b981", bg: "#ecfdf5",   bgDark: "#062f22" }, // High priority transactional alert
 };
 
-// ── Static demo data (replace with your API data) ────────────────────────────
+// ── Demo Data reflecting new backend requirements ────────────────────────────
 const INITIAL_NOTIFS: Notification[] = [
   {
-    id: "1", type: "message", read: false, group: "today",
-    title: "Message from Sarah",
-    body: "Is the vintage lamp still available?",
-    time: "2m ago",
+    id: "n1", type: "payment_received", read: false, group: "today",
+    title: "Payment Confirmed! 💰",
+    body: "Tunde B. paid ₦30,000 for your Chess Set. Ship item immediately.",
+    time: "Just now",
+    metadata: { productId: "1342e20d", productName: "Chess Set" }
   },
   {
-    id: "2", type: "price", read: false, group: "today",
+    id: "n2", type: "message", read: false, group: "today",
+    title: "New Message from Sarah",
+    body: "Sent an inquiry regarding your 'Nike Air Force 1'",
+    time: "2m ago",
+    metadata: { productId: "nike-123", productName: "Nike Air Force 1", senderName: "Sarah" }
+  },
+  {
+    id: "n3", type: "reaction", read: false, group: "today",
+    title: "Product Reaction",
+    body: "Amara J. liked your listing 'Calculus 101 Textbook'",
+    time: "15m ago",
+    metadata: { productId: "calc-456", productName: "Calculus 101 Textbook" }
+  },
+  {
+    id: "n4", type: "price", read: false, group: "today",
     title: "Price drop on saved item",
     body: "The Mid-century chair is now 15% off — ₦12,750",
     time: "1h ago",
   },
   {
-    id: "3", type: "live", read: false, group: "today",
-    title: "Your listing is live 🚀",
-    body: "iPhone 13 charger is now visible to students",
-    time: "3h ago",
-  },
-  {
-    id: "4", type: "sold", read: true, group: "yesterday",
-    title: "Item sold!",
-    body: "Someone just bought your Calculus textbook",
+    id: "n5", type: "live", read: true, group: "yesterday",
+    title: "Listing Active",
+    body: "iPhone 13 charger is now visible to students in your area",
     time: "Yesterday · 4:12 PM",
-  },
-  {
-    id: "5", type: "reaction", read: true, group: "yesterday",
-    title: "5 students saved your listing",
-    body: "Your laptop bag is getting attention",
-    time: "Yesterday · 1:30 PM",
-  },
-  {
-    id: "6", type: "system", read: true, group: "earlier",
-    title: "Welcome to HiveMarket 🐝",
-    body: "Your campus marketplace is ready. Start buying and selling!",
-    time: "3 days ago",
   },
 ];
 
-// ── Single notification row ───────────────────────────────────────────────────
 const NotifRow = ({
   notif, isDark, theme, onPress, onMarkRead,
 }: {
@@ -88,11 +91,13 @@ const NotifRow = ({
   onPress: () => void;
   onMarkRead: () => void;
 }) => {
-  const icon    = ICON_MAP[notif.type];
+  const icon = ICON_MAP[notif.type];
   const bgColor = isDark ? icon.bgDark : icon.bg;
   const scaleAnim = useRef(new Animated.Value(1)).current;
 
-  const onPressIn  = () => Animated.spring(scaleAnim, { toValue: 0.97, useNativeDriver: true }).start();
+  const isHighPriority = notif.type === "payment_received";
+
+  const onPressIn  = () => Animated.spring(scaleAnim, { toValue: 0.98, useNativeDriver: true }).start();
   const onPressOut = () => Animated.spring(scaleAnim, { toValue: 1,    useNativeDriver: true }).start();
 
   return (
@@ -104,26 +109,27 @@ const NotifRow = ({
         style={[
           styles.notifCard,
           {
-            backgroundColor: notif.read
-              ? (isDark ? "#0f172a" : "#fff")
-              : (isDark ? "#0d1f0d" : "#f0fdf4"),
-            borderColor: notif.read
-              ? (isDark ? "#1e293b" : "#f1f5f9")
-              : (isDark ? "#1a3a1a" : "#bbf7d0"),
+            backgroundColor: !notif.read
+              ? (isHighPriority ? (isDark ? "#122315" : "#e6fcf0") : (isDark ? "#0d1f0d" : "#f0fdf4"))
+              : (isDark ? "#0f172a" : "#fff"),
+            borderColor: !notif.read
+              ? (isHighPriority ? "#10b981" : (isDark ? PRIMARY_DARK : "#bbf7d0"))
+              : (isDark ? "#1e293b" : "#f1f5f9"),
+            borderWidth: isHighPriority && !notif.read ? 1.5 : 1,
           },
         ]}
       >
-        {/* Unread indicator bar */}
+        {/* Priority Indicator Stripe */}
         {!notif.read && (
-          <View style={[styles.unreadBar, { backgroundColor: PRIMARY }]} />
+          <View style={[styles.unreadBar, { backgroundColor: isHighPriority ? "#10b981" : PRIMARY }]} />
         )}
 
-        {/* Icon bubble */}
+        {/* Dynamic Context Bubble */}
         <View style={[styles.iconBubble, { backgroundColor: bgColor }]}>
           <Text style={styles.iconEmoji}>{icon.emoji}</Text>
         </View>
 
-        {/* Content */}
+        {/* Text Container */}
         <View style={styles.notifContent}>
           <View style={styles.notifTop}>
             <Text
@@ -139,31 +145,35 @@ const NotifRow = ({
               {notif.title}
             </Text>
             {!notif.read && (
-              <View style={[styles.unreadDot, { backgroundColor: PRIMARY }]} />
+              <View style={[styles.unreadDot, { backgroundColor: isHighPriority ? "#10b981" : PRIMARY }]} />
             )}
           </View>
-          <Text
-            numberOfLines={2}
-            style={[styles.notifBody, { color: isDark ? "#64748b" : "#64748b" }]}
-          >
+          
+          <Text style={[styles.notifBody, { color: isDark ? "#94a3b8" : "#475569" }]}>
             {notif.body}
           </Text>
+
+          {/* Subtitle tag linking to the related item contextual route */}
+          {notif.metadata?.productName && (
+            <View style={[styles.productBadge, { backgroundColor: isDark ? "#1e293b" : "#f1f5f9" }]}>
+              <Text numberOfLines={1} style={[styles.productBadgeText, { color: PRIMARY }]}>
+                📦 Item: {notif.metadata.productName}
+              </Text>
+            </View>
+          )}
+
           <Text style={[styles.notifTime, { color: isDark ? "#475569" : "#94a3b8" }]}>
             {notif.time}
           </Text>
         </View>
 
-        {/* Chevron */}
         <Text style={[styles.chevron, { color: isDark ? "#334155" : "#cbd5e1" }]}>›</Text>
       </Pressable>
     </Animated.View>
   );
 };
 
-// ── Section label ─────────────────────────────────────────────────────────────
-const SectionLabel = ({
-  label, isDark, theme,
-}: { label: string; isDark: boolean; theme: any }) => (
+const SectionLabel = ({ label, isDark, theme }: { label: string; isDark: boolean; theme: any }) => (
   <View style={styles.sectionLabelRow}>
     <View style={[styles.sectionAccent, { backgroundColor: PRIMARY }]} />
     <Text style={[styles.sectionLabelText, { color: theme.text }]}>{label}</Text>
@@ -171,23 +181,28 @@ const SectionLabel = ({
   </View>
 );
 
-// ── Main Screen ───────────────────────────────────────────────────────────────
 const NotificationScreen = () => {
   const scheme = useColorScheme();
   const isDark = scheme === "dark";
   const theme  = isDark ? Colors.dark : Colors.light;
 
   const [notifications, setNotifications] = useState<Notification[]>(INITIAL_NOTIFS);
-
   const unreadCount = notifications.filter((n) => !n.read).length;
 
-  const markAllRead = () =>
-    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+  const markAllRead = () => setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+  const markOneRead = (id: string) => setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)));
 
-  const markOneRead = (id: string) =>
-    setNotifications((prev) =>
-      prev.map((n) => (n.id === id ? { ...n, read: true } : n))
-    );
+  const handleNotificationPress = (notif: Notification) => {
+    if (notif.metadata?.productId) {
+      if (notif.type === "message") {
+      //  router.push({ pathname: `/ChatScreen/${notif.metadata.productId}` });
+      } else if (notif.type === "payment_received" || notif.type === "sold") {
+      //  router.push({ pathname: `/OrderDetail/${notif.metadata.productId}` });
+      } else {
+        router.push({ pathname: `/ProductDetail/ProductDetail`, params: { id: notif.metadata.productId } });
+      }
+    }
+  };
 
   const groups: { key: "today" | "yesterday" | "earlier"; label: string }[] = [
     { key: "today",     label: "Today" },
@@ -196,73 +211,38 @@ const NotificationScreen = () => {
   ];
 
   return (
-    <View style={[styles.screen, { backgroundColor: theme.screenBackground ?? theme.background , paddingTop: 25}]}>
-      <StatusBar
-        backgroundColor={theme.screenBackground ?? theme.background}
-        barStyle={isDark ? "light-content" : "dark-content"}
-      />
+    <View style={[styles.screen, { backgroundColor: theme.screenBackground ?? theme.background, paddingTop: 25 }]}>
+      <StatusBar backgroundColor={theme.screenBackground ?? theme.background} barStyle={isDark ? "light-content" : "dark-content"} />
 
-      {/* ── Header ── */}
+      {/* --- Header --- */}
       <View style={[styles.header, { borderColor: isDark ? PRIMARY_DARK : "#e4f0e4" }]}>
-        <Pressable onPress={() => router.back()} style={styles.backBtn}>
-          <View style={[styles.backCircle, {
-            backgroundColor: isDark ? "#1e293b" : "#f1f5f9",
-          }]}>
+        <Pressable onPress={() => router.back()}>
+          <View style={[styles.backCircle, { backgroundColor: isDark ? "#1e293b" : "#f1f5f9" }]}>
             <Text style={[styles.backArrow, { color: isDark ? "#94a3b8" : "#475569" }]}>←</Text>
           </View>
         </Pressable>
 
         <View style={{ flex: 1 }}>
-          <Text style={[styles.headerTitle, { color: theme.text }]}>Notifications</Text>
-          {unreadCount > 0 && (
-            <Text style={[styles.headerSub, { color: isDark ? "#64748b" : "#94a3b8" }]}>
-              {unreadCount} unread
-            </Text>
-          )}
+          <Text style={[styles.headerTitle, { color: theme.text }]}>Activity Hub</Text>
+          {unreadCount > 0 && <Text style={[styles.headerSub, { color: isDark ? "#64748b" : "#94a3b8" }]}>{unreadCount} new interactions</Text>}
         </View>
 
         <View style={styles.headerRight}>
           {unreadCount > 0 && (
-            <Pressable
-              onPress={markAllRead}
-              style={[styles.markAllBtn, {
-                backgroundColor: isDark ? PRIMARY_DARK : PRIMARY_SOFT,
-              }]}
-            >
-              <Text style={[styles.markAllText, { color: PRIMARY }]}>Mark all read</Text>
+            <Pressable onPress={markAllRead} style={[styles.markAllBtn, { backgroundColor: isDark ? PRIMARY_DARK : PRIMARY_SOFT }]}>
+              <Text style={[styles.markAllText, { color: PRIMARY }]}>Clear All</Text>
             </Pressable>
           )}
-          <Pressable style={[styles.menuBtn, {
-            backgroundColor: isDark ? "#1e293b" : "#f1f5f9",
-          }]}>
-            <Text style={{ color: isDark ? "#94a3b8" : "#475569", fontSize: 18, lineHeight: 20 }}>⋯</Text>
-          </Pressable>
         </View>
       </View>
 
-      {/* ── Unread summary pill ── */}
-      {unreadCount > 0 && (
-        <View style={[styles.summaryPill, {
-          backgroundColor: isDark ? PRIMARY_DARK : PRIMARY_SOFT,
-          borderColor: isDark ? "#2d5a2d" : "#c8e6c9",
-        }]}>
-          <Text style={{ fontSize: 14 }}>🐝</Text>
-          <Text style={[styles.summaryText, { color: PRIMARY }]}>
-            You have {unreadCount} new notification{unreadCount > 1 ? "s" : ""}
-          </Text>
-        </View>
-      )}
-
-      {/* ── Notification list ── */}
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.scroll}
-      >
+      {/* --- Notification scroll container --- */}
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
         {groups.map(({ key, label }) => {
           const items = notifications.filter((n) => n.group === key);
           if (items.length === 0) return null;
           return (
-            <View key={key}>
+            <View key={key} style={{ marginBottom: 4 }}>
               <SectionLabel label={label} isDark={isDark} theme={theme} />
               <View style={styles.group}>
                 {items.map((notif) => (
@@ -271,7 +251,7 @@ const NotificationScreen = () => {
                     notif={notif}
                     isDark={isDark}
                     theme={theme}
-                    onPress={() => {}}
+                    onPress={() => handleNotificationPress(notif)}
                     onMarkRead={() => markOneRead(notif.id)}
                   />
                 ))}
@@ -280,17 +260,13 @@ const NotificationScreen = () => {
           );
         })}
 
-        {/* All read state */}
         {unreadCount === 0 && (
           <View style={styles.allReadBanner}>
-            <Text style={{ fontSize: 32 }}>✅</Text>
-            <Text style={[styles.allReadText, { color: isDark ? "#64748b" : "#94a3b8" }]}>
-              You're all caught up!
-            </Text>
+            <Text style={{ fontSize: 36 }}>🐝</Text>
+            <Text style={[styles.allReadText, { color: isDark ? "#64748b" : "#94a3b8" }]}>You're all caught up!</Text>
           </View>
         )}
-
-        <View style={{ height: 80 }} />
+        <View style={{ height: 40 }} />
       </ScrollView>
     </View>
   );
@@ -300,98 +276,39 @@ export default NotificationScreen;
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
-
-  // Header
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-    paddingHorizontal: 14,
-    paddingTop: 14,
-    paddingBottom: 14,
-    borderBottomWidth: 1,
-  },
-  backBtn:    { },
-  backCircle: {
-    width: 40, height: 40, borderRadius: 14,
-    alignItems: "center", justifyContent: "center",
-  },
-  backArrow:  { fontSize: 20, fontWeight: "300" },
-  headerTitle:{ fontSize: 20, fontWeight: "900", letterSpacing: -0.4 },
-  headerSub:  { fontSize: 11, marginTop: 1 },
-  headerRight:{ flexDirection: "row", alignItems: "center", gap: 8 },
-  markAllBtn: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20 },
-  markAllText:{ fontSize: 11, fontWeight: "700" },
-  menuBtn:    { width: 36, height: 36, borderRadius: 12, alignItems: "center", justifyContent: "center" },
-
-  // Summary pill
-  summaryPill: {
-    flexDirection: "row", alignItems: "center", gap: 8,
-    marginHorizontal: 14, marginTop: 12,
-    paddingHorizontal: 14, paddingVertical: 10,
-    borderRadius: 14, borderWidth: 1,
-  },
-  summaryText: { fontSize: 13, fontWeight: "700" },
-
-  // Scroll
-  scroll: { paddingHorizontal: 14, paddingTop: 10 },
-
-  // Section label
-  sectionLabelRow: {
-    flexDirection: "row", alignItems: "center",
-    gap: 8, marginTop: 18, marginBottom: 10,
-  },
-  sectionAccent:   { width: 4, height: 16, borderRadius: 2 },
-  sectionLabelText:{ fontSize: 11, fontWeight: "800", letterSpacing: 1.2, textTransform: "uppercase" },
-  sectionLine:     { flex: 1, height: 1 },
-
-  // Group
-  group: { gap: 8 },
-
-  // Notif card
+  header: { flexDirection: "row", alignItems: "center", gap: 12, paddingHorizontal: 16, paddingVertical: 14, borderBottomWidth: 1 },
+  backCircle: { width: 38, height: 38, borderRadius: 12, alignItems: "center", justifyContent: "center" },
+  backArrow: { fontSize: 18, fontWeight: "600" },
+  headerTitle: { fontSize: 20, fontWeight: "900", letterSpacing: -0.5 },
+  headerSub: { fontSize: 11, marginTop: 1, fontWeight: "500" },
+  headerRight: { flexDirection: "row", alignItems: "center" },
+  markAllBtn: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 14 },
+  markAllText: { fontSize: 11, fontWeight: "700" },
+  scroll: { paddingHorizontal: 16, paddingTop: 4 },
+  sectionLabelRow: { flexDirection: "row", alignItems: "center", gap: 8, marginTop: 16, marginBottom: 10 },
+  sectionAccent: { width: 3, height: 14, borderRadius: 2 },
+  sectionLabelText: { fontSize: 11, fontWeight: "800", letterSpacing: 0.5, textTransform: "uppercase" },
+  sectionLine: { flex: 1, height: 1 },
+  group: { gap: 10 },
   notifCard: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-    borderRadius: 18,
-    borderWidth: 1,
-    padding: 14,
-    overflow: "hidden",
-    position: "relative",
-    shadowColor: "#008100",
-    shadowOpacity: 0.04,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 1,
+    flexDirection: "row", alignItems: "center", gap: 12, borderRadius: 16,
+    padding: 14, overflow: "hidden", position: "relative",
   },
-  unreadBar: {
-    position: "absolute",
-    left: 0, top: 0, bottom: 0,
-    width: 3,
-    borderTopLeftRadius: 18,
-    borderBottomLeftRadius: 18,
-  },
-  iconBubble: {
-    width: 46, height: 46, borderRadius: 15,
-    alignItems: "center", justifyContent: "center",
-    flexShrink: 0,
-  },
-  iconEmoji: { fontSize: 20 },
-
-  // Content
-  notifContent: { flex: 1, gap: 3 },
+  unreadBar: { position: "absolute", left: 0, top: 0, bottom: 0, width: 3.5 },
+  iconBubble: { width: 44, height: 44, borderRadius: 14, alignItems: "center", justifyContent: "center", flexShrink: 0 },
+  iconEmoji: { fontSize: 18 },
+  notifContent: { flex: 1, gap: 2 },
   notifTop: { flexDirection: "row", alignItems: "center", gap: 6 },
-  notifTitle:{ fontSize: 13, flex: 1 },
-  unreadDot: { width: 7, height: 7, borderRadius: 4, flexShrink: 0 },
-  notifBody: { fontSize: 12, lineHeight: 17 },
-  notifTime: { fontSize: 10, marginTop: 2 },
-
-  chevron: { fontSize: 22, fontWeight: "300", marginLeft: 2 },
-
-  // All read
-  allReadBanner: {
-    alignItems: "center", gap: 8,
-    paddingVertical: 30,
+  notifTitle: { fontSize: 13, flex: 1 },
+  unreadDot: { width: 6, height: 6, borderRadius: 3, flexShrink: 0 },
+  notifBody: { fontSize: 12, lineHeight: 16, fontWeight: "400" },
+  productBadge: {
+    alignSelf: 'flex-start', paddingHorizontal: 8, paddingVertical: 4,
+    borderRadius: 8, marginTop: 4, maxWidth: '90%'
   },
-  allReadText: { fontSize: 14, fontWeight: "600" },
+  productBadgeText: { fontSize: 10, fontWeight: "700" },
+  notifTime: { fontSize: 10, marginTop: 4, fontWeight: "500" },
+  chevron: { fontSize: 18, fontWeight: "400", marginLeft: 4 },
+  allReadBanner: { alignItems: "center", gap: 8, paddingVertical: 60 },
+  allReadText: { fontSize: 13, fontWeight: "600" },
 });

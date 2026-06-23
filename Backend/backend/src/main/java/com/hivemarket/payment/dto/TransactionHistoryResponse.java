@@ -6,13 +6,9 @@ import java.util.UUID;
 
 public record TransactionHistoryResponse(
         UUID id,
-        UUID productId,
         String reference,
         BigDecimal amount,
         String status,
-        String productName,
-        String productImage,
-        LocalDateTime createdAt,
-        LocalDateTime paidAt
+        LocalDateTime createdAt
 ) {
 }

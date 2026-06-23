@@ -25,7 +25,7 @@
 
 import { Colors } from '@/constants/theme';
 import { increaseProductViewApi } from '@/src/api/productApi';
-import { useProductStore } from '@/src/store/productStore';
+import { useProducts } from '@/src/hooks/useProducts';
 import { userStore } from '@/src/store/userStore';
 import { RecentListingItem } from '@/src/types/products';
 import { router } from 'expo-router';
@@ -135,9 +135,11 @@ const ListingsScreen = () => {
   const user = userStore.getState();
 
   // ── H2, H3, H4: product store — standard Zustand, safe as hooks ──────────
-  const recentListings     = useProductStore((s) => s.recentListings);   // H2
-  const loading            = useProductStore((s) => s.loading);           // H3
-  const loadRecentListings = useProductStore((s) => s.loadRecentListings); // H4
+ // const recentListings     = useProductStore((s) => s.recentListings);   // H2
+  //const loading            = useProductStore((s) => s.loading);           // H3
+  //const loadRecentListings = useProductStore((s) => s.loadRecentListings); // H4
+
+  const {products: recentListings, loading, refetch} = useProducts(user.id);
 
   // ── H5: filter state ──────────────────────────────────────────────────────
   const [filter, setFilter] = useState<FilterKey>("all");                 // H5
@@ -158,7 +160,7 @@ const ListingsScreen = () => {
 
   // ── H8: load listings on mount ────────────────────────────────────────────
   useEffect(() => {                                                        // H8
-    if (recentListings.length === 0) loadRecentListings(userId);
+  //  if (recentListings.length === 0) loadRecentListings(userId);
   }, []);
 
   // ── H9, H10: stable callbacks ─────────────────────────────────────────────
@@ -333,7 +335,7 @@ const ListingsScreen = () => {
       refreshControl={
         <RefreshControl
           refreshing={loading}
-          onRefresh={() => loadRecentListings(userId)}
+          onRefresh={() => refetch}
           tintColor={PRIMARY}
           colors={[PRIMARY]}
         />

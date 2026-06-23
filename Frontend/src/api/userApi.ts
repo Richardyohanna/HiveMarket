@@ -1,7 +1,7 @@
 
 import { localURL } from "@/localURL";
 import { getToken } from "../services/authStorage";
-import { UserStoreData } from "../types/User";
+import { Location, UpdateUser, UserStoreData } from "../types/User";
 
 const BASE_URL = `${localURL}/api`;
 
@@ -143,7 +143,7 @@ export async function registerUserApa(data: RegisterRequestComplete): Promise<vo
 export async function uploadProfilePicture(
     email: string, 
     image: string,
-    location: string,
+    location: Location,
     university: string,
     campus: string
 
@@ -170,7 +170,9 @@ export async function uploadProfilePicture(
     } as any);
 
     formData.append("email", email);
-    formData.append("location", location);
+    formData.append("address", location.address);
+    formData.append("latitude", String(location.latitude));
+    formData.append("longitude", String(location.longitude));
     formData.append("university", university);    
     formData.append("campus", campus)
 
@@ -222,4 +224,48 @@ export async function getUserData(email: string, callback: (data: UserStoreData)
         console.error("Cannot connect to the server:", error);
         throw error;
     }
+}
+
+export async function updateUserDetail (data: UpdateUser){
+
+    try {
+
+        const token = await getToken();
+
+        if(token == null) {
+            console.log("Please login to be able to access this api call")
+            throw new Error("Login required");
+        }
+
+
+        uploadProfilePicture(data.email,data.profile_picture, data.location, data.university, data.campus);
+
+        const dataToBeUpdated = {
+            userId: data.id,
+            email: data.email,
+            location: data.location,
+            university: data.university,
+            campus: data.campus,
+            full_name: data.full_name
+        }
+        const response = await fetch(`${BASE_URL}/update/profile`, {
+            method: "PUT",
+            headers: {
+                "Authorization": `Bearer ${token}`,
+                 "Content-Type": "application/json"
+            }, 
+            body: JSON.stringify(dataToBeUpdated)
+        })
+
+        const result = await response.json();
+
+        console.log("This is the updated output", result);
+
+        return result;
+
+    } catch(e) {
+        console.log(e);
+        console.log("Cannot find or connect to the route update user Info")
+    }
+
 }

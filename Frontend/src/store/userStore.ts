@@ -1,16 +1,23 @@
 import { create } from "zustand";
-import { User, UserStoreData } from "../types/User";
+import { Location, User, UserStoreData } from "../types/User";
 
 const initialState: User = {
     id: "",
     full_name: "",
     email: "",
-    role: "",   
+    role: "",
     gender: "",
     profile_picture: "",
     university: "",
-    location: "",
+    location: {
+        address: "",
+        latitude: 0,
+        longitude: 0
+    },
     campus: "",
+    isSeller: false,
+    walletBalance: 0,
+    totalEarned: 0,
 }
 export const userStore = create<UserStoreData>((set, get) => ({
     ...initialState,
@@ -22,8 +29,11 @@ export const userStore = create<UserStoreData>((set, get) => ({
     setGender: (value: string) => set({gender: value}),
     setProfilePicture: (value: string) => set({profile_picture: value}),
     setUniversity: (value: string) => set({university: value}),
-    setLocation: (value: string) => set({location: value}),
+    setLocation: (value: Location) => set({location: value}),
     setCampus: (value: string) => set({campus: value}),
+    setIsSeller: (value: boolean) => set({isSeller: value}),
+    setWalletBalance: (value: number) => set({walletBalance: value}),
+    setTotalEarned: (value: number) => set({totalEarned: value}),
 
      clearUser: () => set({ ...initialState }),
 }))

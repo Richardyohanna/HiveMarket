@@ -203,11 +203,16 @@ const ChatScreen = () => {
   const [hasNewMsg,   setHasNewMsg]   = useState(false);
 
   // ── Optional: seller passed from a product / listing screen ──────────────
-  const { sellerEmail, sellerName, sellerId } = useLocalSearchParams<{
+  const { sellerEmail, sellerName, sellerId, ActiveTab } = useLocalSearchParams<{
     sellerEmail?: string;
     sellerName?:  string;
     sellerId?:    string;
+    ActiveTab: TabType;
   }>();
+
+  /*useEffect(()=> {
+    setActiveTab(ActiveTab);
+  }, [ActiveTab]) */
 
   console.log("Conversations in ChatScreen:", conversations);
 
@@ -302,6 +307,7 @@ const ChatScreen = () => {
         fullName: contact.fullName,
         online:   String(contact.online),
         avatar:   contact.avatar ?? "",
+        activeTab: activeTab,
       },
     });
   };

@@ -2,8 +2,10 @@
  * SettingsTab
  * ───────────
  * ZERO hooks. All data via props.
+ * isSeller controls visibility of seller-only rows.
  */
 import { Colors } from '@/constants/theme';
+import { router } from 'expo-router';
 import React from 'react';
 import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 
@@ -15,6 +17,7 @@ type Props = {
   handleLogout: () => void;
   isDark: boolean;
   theme: typeof Colors.light;
+  isSeller?: boolean;
 };
 
 // ─── Pure row — no hooks ──────────────────────────────────────────────────────
@@ -48,20 +51,38 @@ const GroupLabel = ({ text, theme }: { text: string; theme: typeof Colors.light 
   <Text style={[styles.groupLabel, { color: theme.readColor }]}>{text}</Text>
 );
 
-const SettingsTab = ({ handleLogout, isDark, theme }: Props) => (
+const SettingsTab = ({ handleLogout, isDark, theme, isSeller = false }: Props) => (
   <View style={styles.container}>
 
     <GroupLabel text="ACCOUNT" theme={theme} />
-    <Row emoji="👤" label="Edit Profile"    sub="Update your info"       isDark={isDark} theme={theme} onPress={() => {}} />
+    <Row 
+        emoji="👤" 
+        label="Edit Profile" 
+        sub="Update your info" 
+        isDark={isDark} 
+        theme={theme} 
+        onPress={() => router.push("/ProfileScreen/EditProfileScreen")} // Add this line
+      />
     <Row emoji="🔔" label="Notifications"  sub="Manage alerts"          isDark={isDark} theme={theme} onPress={() => {}} />
-    <Row emoji="❤️" label="Wishlist"        sub="Items you saved"        isDark={isDark} theme={theme} onPress={() => {}} />
+    {isSeller && (<Row emoji="🛒" label="Wishlist"        sub="Items you added to cart"        isDark={isDark} theme={theme} onPress={() => {router.push("/(tabs)/CartScreen")}} />)}
     <Row emoji="🛡️" label="Privacy"        sub="Control your data"      isDark={isDark} theme={theme} onPress={() => {}} />
     <Row emoji="🎓" label="Student ID"     sub="Verify your enrollment" isDark={isDark} theme={theme} onPress={() => {}} />
 
     <GroupLabel text="TRANSACTIONS" theme={theme} />
+    {/* Payment Methods & My Orders — visible to ALL users */}
     <Row emoji="💳" label="Payment Methods"  sub="Cards & bank accounts"  isDark={isDark} theme={theme} onPress={() => {}} />
-    <Row emoji="📦" label="My Orders"        sub="Track your purchases"   isDark={isDark} theme={theme} onPress={() => {}} />
-    <Row emoji="💰" label="Wallet & Payouts" sub="Seller earnings"        isDark={isDark} theme={theme} onPress={() => {}} />
+    <Row 
+      emoji="📦" 
+      label="My Orders" 
+      sub="Track your purchases" 
+      isDark={isDark} 
+      theme={theme} 
+      onPress={() => router.push("/Orders/MyOrdersScreen")} // Wire navigation point
+    />
+    {/* Wallet & Payouts — sellers only */}
+    {isSeller && (
+      <Row emoji="💰" label="Wallet & Payouts" sub="Seller earnings" isDark={isDark} theme={theme} onPress={() => {}} />
+    )}
 
     <GroupLabel text="SUPPORT" theme={theme} />
     <Row emoji="💬" label="Help Center"    sub="FAQs & contact us"      isDark={isDark} theme={theme} onPress={() => {}} />

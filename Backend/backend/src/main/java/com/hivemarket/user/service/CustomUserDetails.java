@@ -36,12 +36,13 @@ public class CustomUserDetails implements UserDetailsService, UserDetail{
 				.build();
 	}
 
+	@SuppressWarnings("null")
 	@Override
 	public UserData getUserAndUpdate(UserData userData) throws IOException {
 		// TODO Auto-generated method stub
 		
 		if(!userRepository.findByEmail(userData.getEmail()).isPresent()) {
-			throw new RuntimeException("Cannot find Email in Database");
+			throw new RuntimeException("Cannot find UserID from getUserID in Database");
 		}
 		
 		User user = userRepository.findByEmail(userData.getEmail())
@@ -51,6 +52,10 @@ public class CustomUserDetails implements UserDetailsService, UserDetail{
 		String userEmail = user.getEmail();
 		
 		System.out.println("Hmm Role? " + userData.getRole());
+		
+		if (userData.getFull_name() != null) {
+			user.setFull_name(userData.getFull_name());
+		}
 		
 		if (userData.getCampus() != null) {
 			user.setCampus(userData.getCampus());

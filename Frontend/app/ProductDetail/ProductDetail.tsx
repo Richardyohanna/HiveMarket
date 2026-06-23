@@ -272,7 +272,7 @@ const RelatedCard = React.memo(({
       <Text numberOfLines={1} style={[styles.relatedName, { color: theme.text }]}>{item.pName}</Text>
       <View style={styles.relatedMeta}>
         <Text style={[styles.relatedPrice, { color: PRIMARY }]}>₦{Number(item.pAmount).toLocaleString()}</Text>
-        <Text style={styles.relatedStar}>★ {Number(item.rating || 0).toFixed(1)}</Text>
+        <Text style={styles.relatedStar}>★ {Number(item.ratingData?.AverageRating || 0).toFixed(1)}</Text>
       </View>
     </View>
   </Pressable>

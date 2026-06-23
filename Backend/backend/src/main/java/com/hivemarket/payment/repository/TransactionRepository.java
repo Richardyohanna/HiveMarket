@@ -12,6 +12,8 @@ public interface TransactionRepository extends JpaRepository<Transaction, UUID> 
 
     Optional<Transaction> findByReference(String reference);
 
+    Boolean existsByReference(String reference);
+    
     List<Transaction> findByBuyerIdOrderByCreatedAtDesc(UUID buyerId);
 
     List<Transaction> findBySellerIdOrderByCreatedAtDesc(UUID sellerId);

@@ -6,6 +6,7 @@ import java.util.UUID;
 
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.lang.NonNull;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -73,6 +74,14 @@ public class ProductController {
     	System.out.println("Connected /all Getting All  Product by  userId: " + userId);
     	
     	return userId == null ? productService.getAllProducts() : productService.getAllProducts(userId);
+    }
+    
+    @GetMapping("/shop/all")
+    public List<ProductResponse> getAllShopProduct(@RequestParam(required = false) UUID userId, @RequestParam @NonNull UUID ShopId) {
+        
+    	System.out.println("Connected /all Getting All  Product by  userId: " + userId);
+    	
+    	return userId == null ? productService.getAllShopProducts(ShopId) : productService.getAllShopProducts(userId, ShopId);
     }
     
 

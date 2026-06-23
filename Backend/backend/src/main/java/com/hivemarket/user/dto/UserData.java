@@ -3,6 +3,8 @@ package com.hivemarket.user.dto;
 
 import java.util.UUID;
 
+import com.hivemarket.dto.Location;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -35,7 +37,7 @@ public class UserData{
 		
 		String profile_picture;
 		
-		String location;
+		Location location;
 		
 		
 		
